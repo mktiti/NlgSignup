@@ -1,13 +1,15 @@
-package hu.titi.nlg;
+package hu.titi.nlg.entity;
 
 public class Event implements Comparable<Event> {
 
+    private final int id;
     private final String name;
     private final String description;
     private final TimeFrame timeFrame;
     private final int maxStudents;
 
-    public Event(String name, String description, TimeFrame timeFrame, int maxStudents) {
+    public Event(int id, String name, String description, TimeFrame timeFrame, int maxStudents) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.timeFrame = timeFrame;
@@ -28,6 +30,10 @@ public class Event implements Comparable<Event> {
 
     public int getMaxStudents() {
         return maxStudents;
+    }
+
+    public int getId() {
+        return id;
     }
 
     @Override

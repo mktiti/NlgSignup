@@ -1,5 +1,7 @@
 package hu.titi.nlg;
 
+import hu.titi.nlg.entity.Student;
+
 import java.util.*;
 
 public class StudentRepo {

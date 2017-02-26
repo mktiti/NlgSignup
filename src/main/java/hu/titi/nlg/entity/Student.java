@@ -1,8 +1,8 @@
-package hu.titi.nlg;
+package hu.titi.nlg.entity;
 
 public class Student implements Comparable<Student> {
 
-    private long id;
+    private int id;
     private final String email;
     private final String code;
 
@@ -11,7 +11,7 @@ public class Student implements Comparable<Student> {
         this.code = code;
     }
 
-    public Student(long id, String email, String code) {
+    public Student(int id, String email, String code) {
         this.id = id;
         this.email = email;
         this.code = code;
@@ -25,7 +25,7 @@ public class Student implements Comparable<Student> {
         return email;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
