@@ -1,20 +1,21 @@
-package hu.titi.nlg;
+package hu.titi.nlg.entity;
 
 import java.time.LocalTime;
-import static java.time.LocalTime.*;
 
-public enum TimeFrame {
-    FIRST(parse("08:00"), parse("10:00")),
-    SECOND(parse("10:00"), parse("12:00")),
-    THIRD(parse("12:00"), parse("14:00")),
-    FOURTH(parse("14:00"), parse("16:00"));
+public class TimeFrame {
 
+    private final int id;
     private final LocalTime start;
     private final LocalTime end;
 
-    TimeFrame(LocalTime start, LocalTime end) {
+    public TimeFrame(int id, LocalTime start, LocalTime end) {
+        this.id = id;
         this.start = start;
         this.end = end;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public LocalTime getEnd() {
