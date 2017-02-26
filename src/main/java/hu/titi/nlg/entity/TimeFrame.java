@@ -8,7 +8,7 @@ public class TimeFrame {
     private final LocalTime start;
     private final LocalTime end;
 
-    TimeFrame(int id, LocalTime start, LocalTime end) {
+    public TimeFrame(int id, LocalTime start, LocalTime end) {
         this.id = id;
         this.start = start;
         this.end = end;
