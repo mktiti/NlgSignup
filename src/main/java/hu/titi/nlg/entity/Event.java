@@ -4,24 +4,18 @@ public class Event implements Comparable<Event> {
 
     private final int id;
     private final String name;
-    private final String description;
     private final int timeFrameId;
     private final int maxStudents;
 
-    public Event(int id, String name, String description, int timeFrameId, int maxStudents) {
+    public Event(int id, String name, int timeFrameId, int maxStudents) {
         this.id = id;
         this.name = name;
-        this.description = description;
         this.timeFrameId = timeFrameId;
         this.maxStudents = maxStudents;
     }
 
     public int getTimeFrameId() {
         return timeFrameId;
-    }
-
-    public String getDescription() {
-        return description;
     }
 
     public String getName() {
@@ -45,7 +39,12 @@ public class Event implements Comparable<Event> {
         return event.name.compareTo(name);
     }
 
+    @Override
+    public String toString() {
+        return "Event [" + id + "] {" + name + " (" + maxStudents + ")}";
+    }
+
     public String toHtml() {
-        return "<h2>" + name + " [" + maxStudents + "]</h2>" + description + "<br /><br />";
+        return "<h2>" + name + " [" + maxStudents + "]</h2><br>";
     }
 }

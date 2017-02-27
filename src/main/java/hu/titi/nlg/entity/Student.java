@@ -2,17 +2,21 @@ package hu.titi.nlg.entity;
 
 public class Student implements Comparable<Student> {
 
-    private int id;
+    private final int id;
+    private final String name;
     private final String email;
     private final String code;
 
-    public Student(String email, String code) {
+    public Student(String name, String email, String code) {
+        id = -1;
+        this.name = name;
         this.email = email;
         this.code = code;
     }
 
-    public Student(int id, String email, String code) {
+    public Student(int id, String name, String email, String code) {
         this.id = id;
+        this.name = name;
         this.email = email;
         this.code = code;
     }
@@ -25,13 +29,17 @@ public class Student implements Comparable<Student> {
         return email;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public int getId() {
         return id;
     }
 
     @Override
     public String toString() {
-        return "Student {" + email + "}";
+        return "Student [" + id + "] {" + name + " - " + email + "}";
     }
 
     @Override
@@ -40,6 +48,6 @@ public class Student implements Comparable<Student> {
             return 0;
         }
 
-        return student.email.compareTo(email);
+        return student.name.compareTo(name);
     }
 }

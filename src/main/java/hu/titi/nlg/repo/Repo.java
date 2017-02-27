@@ -17,62 +17,83 @@ interface Repo<E> {
     default Optional<E> getSingleFromSQL(String query, DBUtil.PrepStatementSetter setter) {
         Optional<E> ret = Optional.empty();
 
-        try (Connection conn = DBUtil.getConnection()) {
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
             if (conn == null) {
-                return null;
+                return Optional.empty();
             }
 
-            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            preparedStatement = conn.prepareStatement(query);
             setter.set(preparedStatement);
             preparedStatement.executeQuery();
-            ResultSet resultSet = preparedStatement.getResultSet();
+            resultSet = preparedStatement.getResultSet();
 
             if (resultSet.next()) {
                 ret =  Optional.of(fromSingleRow(resultSet));
             }
 
-            resultSet.close();
             return ret;
 
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
         }
 
-        return null;
+        return Optional.empty();
     }
 
     default Collection<E> getMultipleFromSQL(String query, DBUtil.PrepStatementSetter setter) {
-        try (Connection conn = DBUtil.getConnection()) {
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
             if (conn == null) {
                 return null;
             }
 
-            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            preparedStatement = conn.prepareStatement(query);
             setter.set(preparedStatement);
             preparedStatement.executeQuery();
-            ResultSet resultSet = preparedStatement.getResultSet();
+            resultSet = preparedStatement.getResultSet();
 
             return fromResultSet(resultSet);
 
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
         }
 
         return null;
     }
 
     default Collection<E> getAll() {
-        try (Connection conn = DBUtil.getConnection()) {
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
 
             if (conn == null) {
                 return null;
             }
 
-            ResultSet result = conn.prepareStatement(selectAllQuery()).executeQuery();
-            return fromResultSet(result);
+            preparedStatement = conn.prepareStatement(selectAllQuery());
+            resultSet = preparedStatement.executeQuery();
+            return fromResultSet(resultSet);
 
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
         }
 
         return null;
@@ -85,11 +106,19 @@ interface Repo<E> {
             ret.add(fromSingleRow(resultSet));
         }
 
-        resultSet.close();
-
         return ret;
     }
 
     E fromSingleRow(ResultSet resultSet) throws SQLException;
+
+    default void close(AutoCloseable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }
