@@ -1,0 +1,12 @@
+<html>
+    <body>
+
+        <h1>Admin felület</h1>
+
+        <a href="/admin//timeframes">Idősávok</a>
+        <a href="/admin/events">Események</a>
+        <a href="/admin/students">Diákok</a>
+        <a href="/logout">Kijelentkezés</a>
+
+    </body>
+</html>

@@ -112,13 +112,7 @@ interface Repo<E> {
     E fromSingleRow(ResultSet resultSet) throws SQLException;
 
     default void close(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        DBUtil.close(closeable);
     }
 
 }

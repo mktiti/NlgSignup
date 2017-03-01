@@ -5,11 +5,14 @@ import hu.titi.nlg.repo.EventRepo;
 import hu.titi.nlg.repo.StudentRepo;
 import hu.titi.nlg.repo.TimeframeRepo;
 
+import java.io.File;
 import java.io.IOException;
 
 import static spark.Spark.*;
 
 public class Context {
+
+    public static final char SEPARATOR = ';';
 
     public static final StudentRepo studentRepo = new StudentRepo();
     public static final TimeframeRepo timeframeRepo = new TimeframeRepo();
@@ -20,6 +23,10 @@ public class Context {
     }
 
     private Context() {
+
+        new File("uplod").mkdir();
+        staticFiles.externalLocation("upload");
+
         redirect.get("/", "/login");
         get("/shutdown", (req, res) -> {stop(); return "Shutting down";});
 
@@ -29,13 +36,13 @@ public class Context {
         new AdminHandler();
         new LoginHandler();
 
-        /*
+
         try {
             org.apache.derby.tools.ij.main(new String[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        */
+
 
 
     }

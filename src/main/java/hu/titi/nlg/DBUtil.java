@@ -1,9 +1,8 @@
 package hu.titi.nlg;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DBUtil {
 
@@ -12,11 +11,14 @@ public class DBUtil {
 
     private static final String DB_URL = "jdbc:derby:schoolDB;create=true";
 
-    private static final String CREATE_STUDENT = "CREATE TABLE STUDENT(ID INTEGER NOT NULL PRIMARY KEY, NAME VARCHAR(100) NOT NULL, EMAIL VARCHAR(100) NOT NULL, PASSKEY VARCHAR(20) NOT NULL, UNIQUE(EMAIL))";
-    private static final String CREATE_TIMEFRAME = "CREATE TABLE TIMEFRAME(ID INTEGER NOT NULL PRIMARY KEY, START_TIME TIME NOT NULL, END_TIME TIME NOT NULL, UNIQUE(START_TIME), UNIQUE(END_TIME))";
-    private static final String CREATE_EVENT = "CREATE TABLE EVENT(ID INTEGER NOT NULL PRIMARY KEY, NAME VARCHAR(200) NOT NULL, TIMEFRAME_ID INTEGER NOT NULL REFERENCES TIMEFRAME(ID), MAX_SIGNUPS INT NOT NULL, UNIQUE(NAME))";
-    private static final String CREATE_SIGNUP = "CREATE TABLE SIGNUP(EVENT_ID INT NOT NULL REFERENCES EVENT(ID), STUDENT_ID INT NOT NULL REFERENCES STUDENT(ID), PRIMARY KEY(EVENT_ID, STUDENT_ID))";
+    private static final String CREATE_STUDENT = "CREATE TABLE STUDENT(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 0, INCREMENT BY 1) PRIMARY KEY, NAME VARCHAR(100) NOT NULL, EMAIL VARCHAR(100) NOT NULL, PASSKEY VARCHAR(20) NOT NULL, UNIQUE(EMAIL))";
+    private static final String CREATE_TIMEFRAME = "CREATE TABLE TIMEFRAME(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1) PRIMARY KEY, START_TIME TIME NOT NULL, END_TIME TIME NOT NULL, UNIQUE(START_TIME), UNIQUE(END_TIME))";
+    private static final String CREATE_EVENT = "CREATE TABLE EVENT(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1) PRIMARY KEY, NAME VARCHAR(200) NOT NULL, TIMEFRAME_ID INTEGER NOT NULL REFERENCES TIMEFRAME(ID) ON DELETE CASCADE ON UPDATE RESTRICT, MAX_SIGNUPS INT NOT NULL, UNIQUE(NAME))";
+    private static final String CREATE_SIGNUP = "CREATE TABLE SIGNUP(EVENT_ID INT NOT NULL REFERENCES EVENT(ID) ON DELETE CASCADE ON UPDATE RESTRICT, STUDENT_ID INT NOT NULL REFERENCES STUDENT(ID) ON DELETE CASCADE ON UPDATE RESTRICT, PRIMARY KEY(EVENT_ID, STUDENT_ID))";
     private static final String CREATE_EVENT_SIGNUP = "CREATE VIEW EVENT_SIGNUPS AS SELECT EVENT.ID AS EVENT_ID, COUNT(SIGNUP.EVENT_ID) AS SIGNUPS, EVENT.MAX_SIGNUPS FROM EVENT LEFT OUTER JOIN SIGNUP ON EVENT.ID = SIGNUP.EVENT_ID GROUP BY EVENT.ID, EVENT.MAX_SIGNUPS";
+
+    private static final String INSERT_DUMMY_STUDENT = "INSERT INTO STUDENT (NAME, EMAIL, PASSKEY) VALUES ('$TEMP$', '$TEMP$', '$TEMP$')";
+    private static final String CHECK_DUMMY_STUDENT = "SELECT NAME FROM STUDENT WHERE ID = 0";
 
     static {
         try {
@@ -25,7 +27,11 @@ public class DBUtil {
             e.printStackTrace();
         }
 
-        try (Connection conn = getConnection()) {
+        Connection conn = getConnection();
+        Statement check = null;
+        Statement insert = null;
+        ResultSet checkRs = null;
+        try {
 
             createTable(conn, CREATE_STUDENT);
             createTable(conn, CREATE_TIMEFRAME);
@@ -33,17 +39,34 @@ public class DBUtil {
             createTable(conn, CREATE_SIGNUP);
             createTable(conn, CREATE_EVENT_SIGNUP);
 
+
+            check = conn.createStatement();
+            checkRs = check.executeQuery(CHECK_DUMMY_STUDENT);
+            if (!checkRs.next()) {
+                insert = conn.createStatement();
+                insert.execute(INSERT_DUMMY_STUDENT);
+            }
+
         } catch (SQLException | NullPointerException e) {
             e.printStackTrace();
+        } finally {
+            close(insert);
+            close(checkRs);
+            close(check);
+            close(conn);
         }
     }
 
     private static void createTable(Connection conn, String query) {
+        Statement statement = null;
         try {
-            conn.createStatement().execute(query);
-            System.out.println("Table created!");
+            statement = conn.createStatement();
+            statement.execute(query);
+            System.out.println("Init action used!");
         } catch (SQLException sqle) {
-            System.out.println("Table probably already exists");
+            System.out.println("Init action failed, possibly table exists");
+        } finally {
+            close(statement);
         }
     }
 
@@ -55,6 +78,16 @@ public class DBUtil {
         }
 
         return null;
+    }
+
+    public static void close(AutoCloseable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

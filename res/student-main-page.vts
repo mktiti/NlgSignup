@@ -1,0 +1,36 @@
+<html>
+    <body>
+
+        <h1>NLG Egészségnap 2017</h1>
+
+        <table>
+            <tr>
+                <th>Kezdet</th>
+                <th>Vég</th>
+                <th>Esemény</th>
+            </tr>
+
+            #foreach( $pair in $table )
+                #set ( $tf = $pair.key )
+                #set ( $optE = $pair.value )
+                <tr>
+                    <td>$tf.start</td>
+                    <td>$tf.end</td>
+
+                    <td>
+                        #if ( $optE.isPresent() )
+                            $optE.get().name
+                        #else
+                            <i>Még nem jelentkeztél</i>
+                        #end
+                    </td>
+
+                    <td><a href="/student/events/$tf.id">Módosítás</a></td>
+                </tr>
+            #end
+        </table>
+
+        <a href="/logout">Kijelentkezés</a>
+
+    </body>
+</html>

@@ -14,7 +14,7 @@ public class TimeframeHandler {
     }
 
     private String saveTimeframe(Request req, Response res) {
-        boolean added = timeframeRepo.saveStudent(req.queryParams("from"), req.queryParams("to"));
+        boolean added = timeframeRepo.saveTimeframe(req.queryParams("from"), req.queryParams("to"));
         res.redirect("/admin/timeframes");
         return added ? "Timeframe added" : "Failed to add timeframe";
     }
