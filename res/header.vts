@@ -1,0 +1,13 @@
+<table id='header_table' style="width: 100%; font-size: x-large; padding: 15px 40px 20px 40px; border-bottom: solid black 5px">
+    <tr>
+        <td style="text-align: left; width: 25%">
+            <a href="/">Főoldal</a>
+        </td>
+        <td style="text-align: center; width: 50%; font-size: xx-large">
+            <b>$title</b>
+        </td>
+        <td style="text-align: right; width: 25%">
+            $uname (<a href="/logout">Kijelentkezés</a>)
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Jelentkezés</title>
+
+        <style>
+            #include("style.css")
+            .signed {
+                background-color: #78BF7A;
+            }
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+        <h2 style="text-align: center">Jelentkezés [$tf.start - $tf.end]</h2>
+
+        <table class="ctable">
+            <tr>
+                <th style="text-align: left; border-right: 0">Esemény</th>
+                <th style="text-align: left; border-right: 0">Szabad helyek</th>
+                <th style="border-left: 0"></th>
+            </tr>
+
+            #if ( $events.size() > 0 )
+                #foreach( $eventPair in $events )
+                    #set ( $event = $eventPair.key )
+                    #set ( $available = $event.maxStudents - $eventPair.value )
+                    #set ( $signed = $signedUp.isPresent() && $signedUp.get().id == $event.id )
+                    #if ( $signed )
+                        <tr class="signed">
+                    #else
+                        <tr>
+                    #end
+                        <td> $event.name </td>
+                        <td>
+                            #if( $available > 0 )
+                                $available
+                            #else
+                                <i>Betelt</i>
+                            #end
+                        </td>
+                        <td>
+                            #if ( $signed )
+                                <i>Jelentkezve</i>
+                            #elseif ( $available > 0 )
+                                <a class="abtn" href="/student/events/signup/$event.id">Jelentkezés</a>
+                            #end
+                        </td>
+                    </tr>
+                #end
+            #else
+                <tr><td colspan="3"> <i>Nincsenek események erre az időpontra</i> <tr>
+            #end
+        </table>
+
+    </body>
+</html>

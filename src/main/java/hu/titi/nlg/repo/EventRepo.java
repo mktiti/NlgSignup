@@ -1,13 +1,17 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.Context;
 import hu.titi.nlg.DBUtil;
 import hu.titi.nlg.entity.Event;
-import hu.titi.nlg.entity.Student;
+import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.TimeFrame;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
 
 public class EventRepo implements Repo<Event> {
 
@@ -15,15 +19,17 @@ public class EventRepo implements Repo<Event> {
     private static final String SELECT_BY_ID = "SELECT * FROM EVENT WHERE ID = ?";
     private static final String SELECT_BY_TIMEFRAME = "SELECT * FROM EVENT WHERE TIMEFRAME_ID = ? ORDER BY ID";
     private static final String SELECT_BY_USER_BY_TIMEFRAME = "SELECT EVENT.ID, EVENT.NAME, EVENT.TIMEFRAME_ID, EVENT.MAX_SIGNUPS FROM STUDENT, SIGNUP, EVENT WHERE STUDENT.ID = SIGNUP.STUDENT_ID AND EVENT.ID = SIGNUP.EVENT_ID AND STUDENT.ID = ? AND EVENT.TIMEFRAME_ID = ?";
+    private static final String SELECT_WITH_AVAILABLE_BY_TIMEFRAME = "SELECT ID, NAME, TIMEFRAME_ID, EVENT.MAX_SIGNUPS, SIGNUPS FROM EVENT_SIGNUPS, EVENT WHERE EVENT_SIGNUPS.EVENT_ID = EVENT.ID AND EVENT.TIMEFRAME_ID = ? ORDER BY NAME";
 
     private static final String INSERT_NEW = "INSERT INTO EVENT (NAME, TIMEFRAME_ID, MAX_SIGNUPS) VALUES(?, ?, ?)";
 
     private static final String DELETE_EXISTING_SIGNUP = "DELETE FROM SIGNUP WHERE STUDENT_ID = ? AND EVENT_ID = (SELECT EVENT.ID FROM SIGNUP, EVENT WHERE SIGNUP.EVENT_ID = EVENT.ID AND STUDENT_ID = ? AND EVENT.ID <> ? AND TIMEFRAME_ID = (SELECT TIMEFRAME_ID FROM EVENT WHERE ID = ?))";
     private static final String SELECT_HAS_AVAILABLE = "SELECT SIGNUPS <= MAX_SIGNUPS FROM EVENT_SIGNUPS where event_ID = ?";
-    private static final String INSERT_SIGNUP = "INSERT INTO SIGNUP VALUES (?, ?)";
 
     private static final String INSERT_DUMMY = "INSERT INTO SIGNUP VALUES (?, 0)";
     private static final String UPDATE_DUMMY = "UPDATE SIGNUP SET STUDENT_ID = ? WHERE EVENT_ID = ? AND STUDENT_ID = 0";
+
+    private static final String DELETE_SQL = "DELETE FROM EVENT WHERE ID = ?";
 
     /*
     private static final Map<Integer, Object> eventLocks = new HashMap<>();
@@ -34,7 +40,7 @@ public class EventRepo implements Repo<Event> {
 
     private static void refreshEventlocks() {
         eventLocks.clear();
-        Context.timeframeRepo.getAll().stream().forEach(tf -> eventLocks.put(tf.getId(), new Object()));
+        Context.timeframeRepo.getAll().stream().forEach(tf -> eventLocks.put(tf.getID(), new Object()));
     }
     */
 
@@ -44,6 +50,37 @@ public class EventRepo implements Repo<Event> {
 
     public Optional<Event> getEventSignups(int studentID, int timeFrameID) {
         return getSingleFromSQL(SELECT_BY_USER_BY_TIMEFRAME, ps -> {ps.setInt(1, studentID); ps.setInt(2, timeFrameID);});
+    }
+
+    public Collection<Pair<Event, Integer>> getEventsAndSignupsByTf(TimeFrame tf) {
+        Connection conn = DBUtil.getConnection();
+        if (conn == null) {
+            return null;
+        }
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+
+            preparedStatement = conn.prepareStatement(SELECT_WITH_AVAILABLE_BY_TIMEFRAME);
+            preparedStatement.setInt(1, tf.getId());
+
+            resultSet = preparedStatement.executeQuery();
+            Collection<Pair<Event, Integer>> ret = new ArrayList<>(resultSet.getFetchSize());
+            while (resultSet.next()) {
+                ret.add(new Pair<>(fromSingleRow(resultSet), resultSet.getInt(5)));
+            }
+
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
+        }
+
+        return null;
     }
 
     public Collection<Event> getEventsByTimeframe(TimeFrame tf) {
@@ -164,29 +201,16 @@ public class EventRepo implements Repo<Event> {
     }
 
     public boolean saveEvent(String name, int max, int tfId) {
-        Connection conn = DBUtil.getConnection();
-        PreparedStatement preparedStatement = null;
-        try {
-            if (conn == null) {
-                return false;
-            }
-
-            preparedStatement = conn.prepareStatement(INSERT_NEW);
-            preparedStatement.setString(1, name);
-            preparedStatement.setInt(2, tfId);
-            preparedStatement.setInt(3, max);
-
-            preparedStatement.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            close(preparedStatement);
-            close(conn);
+        final String trimmedName;
+        if (name == null || (trimmedName = name.trim()).length() <= 0 || max <= 0) {
+            return false;
         }
 
-        return false;
+        return runUpdate(INSERT_NEW, ps -> {
+            ps.setString(1, trimmedName);
+            ps.setInt(2, tfId);
+            ps.setInt(3, max);
+        });
     }
 
     @Override
@@ -197,5 +221,9 @@ public class EventRepo implements Repo<Event> {
     @Override
     public Event fromSingleRow(ResultSet resultSet) throws SQLException {
         return new Event(resultSet.getInt(1), resultSet.getString(2), resultSet.getInt(3), resultSet.getInt(4));
+    }
+
+    public boolean deleteEvent(int id) {
+        return runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
     }
 }

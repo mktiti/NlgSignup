@@ -1,8 +1,8 @@
 package hu.titi.nlg;
 
+import hu.titi.nlg.repo.TextManager;
+
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DBUtil {
 
@@ -16,6 +16,8 @@ public class DBUtil {
     private static final String CREATE_EVENT = "CREATE TABLE EVENT(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1) PRIMARY KEY, NAME VARCHAR(200) NOT NULL, TIMEFRAME_ID INTEGER NOT NULL REFERENCES TIMEFRAME(ID) ON DELETE CASCADE ON UPDATE RESTRICT, MAX_SIGNUPS INT NOT NULL, UNIQUE(NAME))";
     private static final String CREATE_SIGNUP = "CREATE TABLE SIGNUP(EVENT_ID INT NOT NULL REFERENCES EVENT(ID) ON DELETE CASCADE ON UPDATE RESTRICT, STUDENT_ID INT NOT NULL REFERENCES STUDENT(ID) ON DELETE CASCADE ON UPDATE RESTRICT, PRIMARY KEY(EVENT_ID, STUDENT_ID))";
     private static final String CREATE_EVENT_SIGNUP = "CREATE VIEW EVENT_SIGNUPS AS SELECT EVENT.ID AS EVENT_ID, COUNT(SIGNUP.EVENT_ID) AS SIGNUPS, EVENT.MAX_SIGNUPS FROM EVENT LEFT OUTER JOIN SIGNUP ON EVENT.ID = SIGNUP.EVENT_ID GROUP BY EVENT.ID, EVENT.MAX_SIGNUPS";
+
+    private static final String CREATE_TEXTS = "CREATE TABLE TEXT(ID INTEGER NOT NULL PRIMARY KEY, TEXT VARCHAR(1000) NOT NULL)";
 
     private static final String INSERT_DUMMY_STUDENT = "INSERT INTO STUDENT (NAME, EMAIL, PASSKEY) VALUES ('$TEMP$', '$TEMP$', '$TEMP$')";
     private static final String CHECK_DUMMY_STUDENT = "SELECT NAME FROM STUDENT WHERE ID = 0";
@@ -38,7 +40,10 @@ public class DBUtil {
             createTable(conn, CREATE_EVENT);
             createTable(conn, CREATE_SIGNUP);
             createTable(conn, CREATE_EVENT_SIGNUP);
+            createTable(conn, CREATE_TEXTS);
 
+            TextManager.insertTexts();
+            TextManager.init();
 
             check = conn.createStatement();
             checkRs = check.executeQuery(CHECK_DUMMY_STUDENT);

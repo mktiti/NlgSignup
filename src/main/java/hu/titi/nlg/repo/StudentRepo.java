@@ -19,11 +19,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class StudentRepo implements Repo<Student> {
 
     private static final String SELECT_ALL_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 ORDER BY NAME";
+    private static final String DELETE_SQL = "DELETE FROM STUDENT WHERE ID <> 0 AND ID = ?";
+    private static final String DELETE_ALL_SQL = "DELETE FROM STUDENT WHERE ID <> 0";
     private static final String SELECT_BY_ID_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND ID = ?";
     private static final String SELECT_BY_EMAIL_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND EMAIL = ?";
     private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.PASSKEY FROM STUDENT, SIGNUP WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
@@ -52,11 +53,19 @@ public class StudentRepo implements Repo<Student> {
         return getMultipleFromSQL(SELECT_BY_EVENT_ID, ps -> ps.setInt(1, eventID));
     }
 
+    public boolean deleteStudent(int id) {
+        return runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
+    }
+
+    public boolean deleteAll() {
+        return runUpdate(DELETE_ALL_SQL, p -> {;});
+    }
+
     private static String generatePass() {
         char[] pass = new char[6];
         for (int i = 0; i < pass.length; i++) {
             for (int j = 0; j < 6; j++) {
-                int r = random.nextInt(34);
+                int r = random.nextInt(36);
                 pass[i] = (r < 10) ? (char)('0' + r) : (char)('A' + (r - 10));
             }
         }
@@ -128,30 +137,11 @@ public class StudentRepo implements Repo<Student> {
     }
 
     public boolean saveStudent(String name, String email) {
-        Connection conn = DBUtil.getConnection();
-        PreparedStatement preparedStatement = null;
-
-        try {
-            if (conn == null) {
-                return false;
-            }
-
-            preparedStatement = conn.prepareStatement(INSERT_NEW_SQL);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, email);
-            preparedStatement.setString(3, generatePass());
-
-            preparedStatement.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            close(preparedStatement);
-            close(conn);
-        }
-
-        return false;
+        return runUpdate(INSERT_NEW_SQL, ps -> {
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setString(3, generatePass());
+        });
     }
 
     @Override

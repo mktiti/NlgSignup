@@ -1,19 +1,36 @@
-<html>
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>$title</title>
+
+        <style media="screen" type="text/css">
+            #include("style.css")
+            .nosignup {
+                background-color: #F75B5B;
+            }
+        </style>
+    </head>
     <body>
 
-        <h1>NLG Egészségnap 2017</h1>
+        #parse("header.vts")
+        <h2 style="text-align: center">$message</h2>
 
-        <table>
+        <table class="ctable">
             <tr>
-                <th>Kezdet</th>
-                <th>Vég</th>
-                <th>Esemény</th>
+                <th style="text-align: center">Kezdet</th>
+                <th style="text-align: center">Vég</th>
+                <th style="text-align: left" colspan="2">Esemény</th>
             </tr>
 
             #foreach( $pair in $table )
                 #set ( $tf = $pair.key )
                 #set ( $optE = $pair.value )
-                <tr>
+                #if( $optE.isPresent() )
+                    <tr>
+                #else
+                    <tr class="nosignup">
+                #end
                     <td>$tf.start</td>
                     <td>$tf.end</td>
 
@@ -25,12 +42,10 @@
                         #end
                     </td>
 
-                    <td><a href="/student/events/$tf.id">Módosítás</a></td>
+                    <td><a class="abtn" href="/student/events/$tf.id">Módosítás</a></td>
                 </tr>
             #end
         </table>
-
-        <a href="/logout">Kijelentkezés</a>
 
     </body>
 </html>

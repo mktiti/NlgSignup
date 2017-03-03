@@ -1,21 +1,20 @@
 package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.Student;
+import hu.titi.nlg.repo.TextManager;
 import spark.Request;
 import spark.Response;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.http.Part;
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Collection;
-import java.util.Random;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
+import static hu.titi.nlg.Context.*;
 import static spark.Spark.*;
-import static hu.titi.nlg.Context.studentRepo;
 
 public class AdminHandler {
 
@@ -29,11 +28,15 @@ public class AdminHandler {
         before("/admin/*", this::filterAdmin);
 
         get("/admin", this::mainPage);
-        get("/admin/students", (req, res) -> listStudents());
+        get("/admin/students", this::listStudents);
         get("/admin/students/diakok.csv", this::getFile);
         post("/admin/students", this::saveStudent);
+        get("/admin/texts", this::listTexts);
+        post("/admin/texts/:tid", this::updateText);
 
         post("/admin/students/upload", this::studentUpload);
+        get("/admin/students/delete/:id", this::deleteStudent);
+        get("/admin/students/deleteAll", this::deleteAllAtudents);
 
     }
 
@@ -61,19 +64,12 @@ public class AdminHandler {
         if (role == null) {
             response.redirect("/login");
         } else if (role != UserRole.ADMIN) {
-            halt(401, "Nem engedélyezett művelet!");
+            response.redirect("/");
         }
     }
 
     private String mainPage(Request request, Response response) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("<a href=\"admin/timeframes\">Idősávok</a><br>");
-        sb.append("<a href=\"admin/events\">Események</a><br>");
-        sb.append("<a href=\"admin/students\">Diákok</a><br>");
-        sb.append("<a href=\"logout\">Kijelentkezés</a><br>");
-
-        return sb.toString();
+        return render(newModel(request), "admin-main-page.vts");
     }
 
     private String studentUpload(Request request, Response response) {
@@ -92,39 +88,76 @@ public class AdminHandler {
         return "";
     }
 
+    private String deleteAllAtudents(Request request, Response response) {
+        studentRepo.deleteAll();
+        response.redirect("/admin/students");
+        return "";
+    }
+
+    private String deleteStudent(Request request, Response response) {
+        String id = request.params(":id");
+
+        try {
+            studentRepo.deleteStudent(Integer.parseInt(id));
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+        } finally {
+            response.redirect("/admin/students");
+        }
+
+        return "";
+    }
+
     private String saveStudent(Request req, Response res) {
         String name = req.queryParams("name");
         String email = req.queryParams("email");
 
-        if (name != null && name.length() > 0 && email != null && email.length() > 0) {
+        if (name != null && (name = name.trim()).length() > 0 && email != null && (email = email.trim()).length() > 0) {
             studentRepo.saveStudent(name, email);
         }
         res.redirect("/admin/students");
         return "";
     }
 
-    private String listStudents() {
-        StringBuilder sb = new StringBuilder();
-        Collection<Student> students = studentRepo.getAll();
+    private String listStudents(Request request, Response response) {
+        Map<String, Object> model = newModel(request);
+        model.put("students", studentRepo.getAll());
+        return render(model, "admin-students.vts");
+    }
 
-        sb.append("<table><tr><th>Név</th><th>E-mail</th><th>Jelszó</th><th></th></tr><tr>");
-        sb.append("<form action=\"/admin/students\" method=\"POST\">" +
-                "  <td><input type=\"text\" name=\"name\" ></td>" +
-                "  <td><input type=\"text\" name=\"email\"></td><td></td>" +
-                "  <td><input type=\"submit\" value=\"Add\"></td></tr>" +
-                "</form> ");
+    private String updateText(Request request, Response response) {
+        String string = request.queryParams("text");
+        String tid = request.params(":tid");
 
-        for (Student s : students) {
-            sb.append("<tr><td>").append(s.getName()).append("</td><td>").append(s.getEmail())
-              .append("</td><td>").append(s.getCode()).append("</td><td></td></tr>");
+
+        try {
+            if (string == null || tid == null || (string = string.trim()).length() == 0) {
+                return "";
+            }
+
+            int id = Integer.parseInt(tid);
+            for (TextManager.Text text : TextManager.Text.values()) {
+                if (text.getID() == id) {
+                    TextManager.updateText(text, string);
+                    break;
+                }
+            }
+
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+        } finally {
+            response.redirect("/admin/texts");
         }
-        sb.append("</table>");
-        sb.append("<a href=\"/\">Vissza</a>");
-        sb.append("<a href=\"/admin/students/diakok.csv\">Fájl letöltése</a>");
 
-        sb.append("<form action=\"/admin/students/upload\" method=\"post\" enctype=\"multipart/form-data\"><input type=\"file\" name=\"file\" accept=\"*.csv\"><input type=\"submit\"></form>");
+        return "";
+    }
 
-        return sb.toString();
+    private String listTexts(Request request, Response response) {
+        Map<String, Object> model = newModel(request);
+        Map<String, TextManager.Text> texts = new HashMap<>();
+        Arrays.stream(TextManager.Text.values()).forEach(t -> texts.put(t.getName(), t));
+        model.put("texts", texts);
+        return render(model, "admin-texts.vts");
     }
 
 }
