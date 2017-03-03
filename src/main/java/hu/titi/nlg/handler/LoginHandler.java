@@ -5,10 +5,13 @@ import hu.titi.nlg.entity.Student;
 import spark.Request;
 import spark.Response;
 
+import java.util.Map;
 import java.util.Optional;
 
-import static spark.Spark.*;
+import static hu.titi.nlg.Context.newModel;
+import static hu.titi.nlg.Context.render;
 import static hu.titi.nlg.handler.AdminHandler.UserRole;
+import static spark.Spark.*;
 
 public class LoginHandler {
 
@@ -19,7 +22,7 @@ public class LoginHandler {
                 getHome(req).ifPresent(res::redirect);
             });
 
-            get("", (req, res) -> showLogin());
+            get("", this::showLogin);
             post("", this::login);
         });
 
@@ -32,11 +35,12 @@ public class LoginHandler {
         String email = request.queryParams("email");
         String pass = request.queryParams("password");
 
-        if (email != null && pass != null && email.length() > 0 && pass.length() > 0 && email.length() < 100 && pass.length() < 100) {
+        if (email != null && pass != null && (email = email.trim()).length() > 0 && (pass = pass.trim()).length() > 0 && email.length() < 100 && pass.length() < 100) {
             if ("admin".equals(email)) {
                 if ("adminpassword67".equals(pass)) {
                     request.session().attribute("role", AdminHandler.UserRole.ADMIN);
-                    response.redirect("/admin");
+                    request.session().attribute("uname", "Admin");
+                    response.redirect("/");
                 } else {
                     response.redirect("/login");
                 }
@@ -46,6 +50,7 @@ public class LoginHandler {
                 if (student.isPresent() && pass.equals(student.get().getCode())) {
                     request.session().attribute("role", AdminHandler.UserRole.STUDENT);
                     request.session().attribute("studentID", student.get().getId());
+                    request.session().attribute("uname", student.get().getName());
                     response.redirect("/");
                 } else {
                     response.redirect("/login");
@@ -53,6 +58,7 @@ public class LoginHandler {
             }
         }
 
+        response.redirect("/login");
         return "";
     }
 
@@ -77,25 +83,16 @@ public class LoginHandler {
     private String logout(Request request, Response response) {
         request.session().removeAttribute("studentID");
         request.session().removeAttribute("role");
+        request.session().removeAttribute("uname");
 
         response.redirect("/login");
 
         return "Kijelentkezve!";
     }
 
-    private String showLogin() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("<form action=\"/login\" method=\"POST\">\n" +
-                "  <br>Email:\n" +
-                "  <input type=\"text\" name=\"email\" >\n" +
-                "  <br>Password:\n" +
-                "  <input type=\"password\" name=\"password\" >\n" +
-                "  <br>\n" +
-                "  <input type=\"submit\" value=\"Login\">\n" +
-                "</form> ");
-
-        return sb.toString();
+    private String showLogin(Request request, Response response) {
+        Map<String, Object> model = newModel(request);
+        return render(model, "login.vts");
     }
 
 }

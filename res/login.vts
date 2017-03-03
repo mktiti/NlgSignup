@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Bejelentkezés</title>
+    </head>
+    <body>
+
+        <h1 style="text-align: center">$title</h1>
+        <h1 style="text-align: center">Bejelentkezés</h1>
+
+        <div style="padding-top: 10px" />
+
+        <form action="/login" method="POST">
+            <table style="margin: 0 auto; font-size: x-large">
+                <tr>
+                    <td style="padding-right: 10px">E-mail</td>
+                    <td> <input style="width: 400px; font-size: x-large" type="text" name="email"> </td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 10px">Jelszó</td>
+                    <td> <input style="width: 400px; font-size: x-large" type="password" name="password"> </td>
+                </tr><tr>
+                    <td colspan="2" style="text-align: right">
+                        <input style="font-size: large" type="submit" value="Bejelentkezés">
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+    </body>
+</html>

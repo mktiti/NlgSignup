@@ -1,24 +1,23 @@
 package hu.titi.nlg.handler;
 
-import hu.titi.nlg.entity.Event;
+import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.Student;
-import hu.titi.nlg.entity.TimeFrame;
 import spark.Request;
 import spark.Response;
 
-import java.sql.Time;
-import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static hu.titi.nlg.Context.eventRepo;
-import static spark.Spark.*;
+import static hu.titi.nlg.Context.*;
 import static hu.titi.nlg.handler.AdminHandler.UserRole;
-import static hu.titi.nlg.Context.studentRepo;
-import static hu.titi.nlg.Context.timeframeRepo;
+import static spark.Spark.*;
 
 public class StudentHandler {
 
     public StudentHandler() {
+
+        redirect.any("/student/", "/student");
 
         before("/student", this::filterStudent);
         before("/student/*", this::filterStudent);
@@ -27,26 +26,17 @@ public class StudentHandler {
     }
 
     private String mainPage(Request request, Response response) {
-        int studentID = (Integer)request.session().attribute("studentID");
+        Map<String, Object> model = newModel(request);
+
+        int studentID = request.session().attribute("studentID");
 
         Optional<Student> optStu = studentRepo.getStudentById(studentID);
         if (optStu.isPresent()) {
-            Student student = optStu.get();
-            Collection<TimeFrame> timeFrames = timeframeRepo.getAll();
+            model.put("table", timeframeRepo.getAll().stream()
+                                       .map(tf -> new Pair<>(tf, eventRepo.getEventSignups(studentID, tf.getId())))
+                                       .collect(Collectors.toList()));
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("<h1>").append(student.getName()).append("</h1><br>");
-            sb.append("<table>").append("<tr><th>Kezdet</th><th>Vég</th><th>Esemény</th></tr>");
-
-            for (TimeFrame tf : timeFrames) {
-                sb.append("<tr><td><a href=\"student/events/").append(tf.getId()).append("\">").append(tf.getStart()).append("</a></td><td>").append(tf.getEnd()).append("</td><td>");
-                sb.append(eventRepo.getSignedupEvent(student.getId(), tf.getId()).map(Event::getName).orElse("<i>Még nem jelentkeztél</i>"));
-                sb.append("</td></tr>");
-            }
-
-            sb.append("</table><br><a href=\"logout\">Kijelentkezés</a>");
-
-            return sb.toString();
+            return render(model, "student-main-page.vts");
         }
 
         halt(401);
@@ -77,7 +67,7 @@ public class StudentHandler {
         if (role == null) {
             response.redirect("/login");
         } else if (role != UserRole.STUDENT) {
-            halt(401, "Nem engedélyezett művelet!");
+            response.redirect("/");
         }
     }
 

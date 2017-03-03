@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Idősávok</title>
+        <style>
+            #include("style.css")
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+
+
+        <h2 style="text-align: center">Idősávok</h2>
+        <table class="ctable">
+            <tr>
+                <th>Kezdet</th>
+                <th style="border-right: 0">Vég</th>
+                <th style="border-left: 0" colspan="2"></th>
+            </tr>
+            #foreach( $tf in $timeframes )
+                <tr>
+                <form action="/admin/timeframes/$tf.id" method="POST">
+                        <td> <input name="start" type="time" value="$tf.start"> </td>
+                        <td> <input name="end" type="time" value="$tf.end"> </td>
+                        <td> <input type="submit" value="Módosítás"> </td>
+                    </form>
+                    <td> <a class="abtn" href="/admin/timeframes/delete/$tf.id">Törlés</a> </td>
+                </tr>
+            #end
+            <form action="/admin/timeframes" method="POST">
+                <tr>
+                    <td> <input name="start" type="time"> </td>
+                    <td> <input name="end" type="time"> </td>
+                    <td colspan="2"> <input type="submit" value="Hozzáadás"> </td>
+                </tr>
+            </form>
+        </table>
+
+    </body>
+</html>

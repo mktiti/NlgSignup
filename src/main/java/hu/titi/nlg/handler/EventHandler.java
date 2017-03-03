@@ -1,45 +1,115 @@
 package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.Event;
+import hu.titi.nlg.entity.Pair;
+import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.entity.TimeFrame;
 import spark.Request;
 import spark.Response;
 
-import static hu.titi.nlg.Context.timeframeRepo;
-import static hu.titi.nlg.Context.eventRepo;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import java.util.Collection;
-import java.util.Optional;
-
+import static hu.titi.nlg.Context.*;
 import static spark.Spark.*;
 
 public class EventHandler {
 
     public EventHandler() {
-        get("/admin/events", (req, res) -> listEvents());
+        get("/admin/events", this::listEvents);
         post("/admin/events", this::saveEvent);
+        get("/admin/events/:eid/report.csv", this::getReportFile);
+        get("/admin/events/report.csv", this::getCompleteReportFile);
+        get("/admin/events/delete/:eid", this::deleteEvent);
 
         get("/student/events/:tf", this::listEventsByTf);
         get("/student/events/signup/:eid", this::signUp);
+
+    }
+
+    private String getCompleteReportFile(Request request, Response response) {
+        Collection<TimeFrame> timeFrames = timeframeRepo.getAll();
+        StringBuilder sb = new StringBuilder();
+        response.type("application/force-download");
+        for (TimeFrame tf : timeFrames) {
+            Collection<Event> events = eventRepo.getEventsByTimeframe(tf);
+            for (Event event : events) {
+                appendEvent(sb, tf, event, studentRepo.getEventSignups(event.getId()));
+                sb.append("\n\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String getReportFile(Request request, Response response) {
+        Event event = null;
+        TimeFrame tf = null;
+        Collection<Student> students = null;
+        try {
+            event = eventRepo.getEventById(Integer.parseInt(request.params(":eid"))).get();
+            tf = timeframeRepo.getTimeframeById(event.getTimeFrameId()).get();
+            students = studentRepo.getEventSignups(event.getId());
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+            halt(400);
+            return "";
+        } catch (NoSuchElementException nsee) {
+            System.out.println("No event by id");
+            halt(404);
+            return "";
+        }
+
+        response.type("application/force-download");
+        StringBuilder sb = new StringBuilder();
+        appendEvent(sb, tf, event, students);
+        return sb.toString();
+    }
+
+    private static void appendEvent(StringBuilder sb, TimeFrame tf, Event event, Collection<Student> students) {
+        sb.append(event.getName()).append(SEPARATOR).append(tf.getStart()).append(" - ").append(tf.getEnd()).append(SEPARATOR).append("\n\nNév").append(SEPARATOR)
+                .append("E-mail").append(SEPARATOR).append('\n');
+
+        for (Student s : students) {
+            sb.append(s.getName()).append(SEPARATOR).append(s.getEmail()).append(SEPARATOR).append('\n');
+        }
     }
 
     private String saveEvent(Request req, Response res) {
-        String name =  req.queryParams("name");
-        int max = Integer.parseInt(req.queryParams("max"));
-        int tfId = Integer.parseInt(req.queryParams("tf"));
+        try {
+            String name = req.queryParams("name");
+            int max = Integer.parseInt(req.queryParams("max"));
+            int tfId = Integer.parseInt(req.queryParams("tf"));
 
-        boolean added = eventRepo.saveEvent(name, max, tfId);
+            eventRepo.saveEvent(name, max, tfId);
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format Exception");
+        }
         res.redirect("/admin/events");
-        return added ? "Event added" : "Failed to add event";
+        return "";
+    }
+
+    private String deleteEvent(Request request, Response response) {
+        String id = request.params(":eid");
+
+        try {
+            eventRepo.deleteEvent(Integer.parseInt(id));
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+        } finally {
+            response.redirect("/admin/events");
+        }
+
+        return "";
     }
 
     private String signUp(Request request, Response response) {
+        long start = System.currentTimeMillis();
         String eventString = request.params(":eid");
         int studentID = request.session().attribute("studentID");
         try {
             int eventID = Integer.parseInt(eventString);
 
-            System.out.println("Signup to " + eventID);
             eventRepo.signUp(eventID, studentID);
 
         } catch (NumberFormatException nfe) {
@@ -59,22 +129,16 @@ public class EventHandler {
             }
 
             TimeFrame tf = otf.get();
+            Optional<Event> signedUp = eventRepo.getEventSignups(request.session().attribute("studentID"), tf.getId());
             if (otf.isPresent()) {
-                Collection<Event> events = eventRepo.getEventsByTimeframe(tf);
+                Map<String, Object> model = newModel(request);
+                model.put("tf", tf);
+                model.put("events", eventRepo.getEventsAndSignupsByTf(tf));
+                model.put("signedUp", signedUp);
 
-                StringBuilder sb = new StringBuilder();
-                sb.append("<h1>").append(tf.getStart()).append(" - ").append(tf.getEnd()).append("</h1><br>");
-                sb.append("<table>").append("<tr><th>Név</th><th>Férőhelyek</th><th>Jelentkezés</th></tr>");
-
-                for (Event e : events) {
-                    sb.append("<tr><td>").append(e.getName()).append("</td><td>").append(e.getMaxStudents()).append("</td>");
-                    sb.append("<td><a href=\"/student/events/signup/").append(e.getId()).append("\">Sign up</a></td></tr>");
-                }
-
-                sb.append("</table><br><a href=\"/student\">Vissza</a>");
-
-                return sb.toString();
+                return render(model, "student-signup.vts");
             }
+
         } catch (NumberFormatException nfe) {
             System.out.println("NumberFormat error");
         }
@@ -83,36 +147,18 @@ public class EventHandler {
         return "";
     }
 
-    private String listEvents() {
-        StringBuilder sb = new StringBuilder();
-
-        Collection<TimeFrame> timeFrames = timeframeRepo.getAll();
-
-        for (TimeFrame tf : timeFrames) {
-            Collection<Event> events = eventRepo.getEventsByTimeframe(tf);
-            sb.append(tf.getId()).append(" [").append(tf.getStart()).append(" - ").append(tf.getEnd()).append("]<br>");
-            for (Event e : events) {
-                sb.append(e.getName()).append("<br>");
-            }
-            sb.append("<br>");
+    private String listEvents(Request request, Response response) {
+        Map<String, Object> model = newModel(request);
+        Collection<TimeFrame> timeframes = timeframeRepo.getAll();
+        List<Pair<TimeFrame, Pair<Event, Integer>>> table = new ArrayList<>(40);
+        for (TimeFrame tf : timeframes) {
+            table.addAll(eventRepo.getEventsAndSignupsByTf(tf).stream().map(p -> new Pair<>(tf, p)).collect(Collectors.toList()));
         }
 
-        sb.append("<form action=\"/admin/events\" method=\"POST\">\n" +
-                "  <br>Name:\n" +
-                "  <input type=\"text\" name=\"name\" >\n" +
-                "  <br>Max:\n" +
-                "  <input type=\"text\" name=\"max\" >\n" +
-                "  <br>TF:\n");
+        model.put("timeframes", timeframes);
+        model.put("table", table);
 
-        for (TimeFrame tf : timeFrames) {
-            sb.append("<br><input type=\"radio\" name=\"tf\" value=\"" + tf.getId() + "\">");
-            sb.append(tf.getStart()).append(" - ").append(tf.getEnd());
-        }
-
-        sb.append("<br>\n" +
-                "  <input type=\"submit\" value=\"Add\">\n" +
-                "</form> ");
-        return sb.toString();
+        return render(model, "admin-events.vts");
     }
 
 }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Események</title>
+        <style>
+            #include("style.css")
+            .td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+
+        <h2 style="text-align: center">Események</h2>
+        <table class="ctable">
+            <tr>
+                <th>Időpont</th>
+                <th>Név</th>
+                <th>Jelentkezettek</th>
+                <th>Max létszám</th>
+                <th colspan="2"> <a class="abtn" href="/admin/events/report.csv">Összesített CSV Kivonat</a> </th>
+            </tr>
+            <form action="/admin/events" method="POST">
+                <tr>
+                    <td style="text-align: center">
+                        <select name="tf">
+                            #foreach( $tf in $timeframes )
+                                <option value="$tf.id">$tf.start - $tf.end</option>
+                            #end
+                        </select>
+                    </td>
+                    <td> <input type="text" name="name"> </td>
+                    <td>  </td>
+                    <td> <input type="number" min="1" name="max"> </td>
+                    <td colspan="2" style="text-align: left"> <input type="submit" value="Hozzáadás"> </td>
+                </tr>
+            </form>
+            #foreach( $pair in $table )
+                #set( $tf = $pair.key )
+                #set( $eventPair = $pair.value )
+                #set( $event = $eventPair.key )
+                #set( $taken = $eventPair.value )
+                <tr>
+                    <td> $tf.start - $tf.end</td>
+                    <td> $event.name </td>
+                    <td> $taken </td>
+                    <td> $event.maxStudents </td>
+                    <td> <a class="abtn" href="/admin/events/delete/$event.id">Törlés</a> </td>
+                    <td> <a class="abtn" href="/admin/events/$event.id/report.csv">CSV Kivonat</a> </td>
+                </tr>
+            #end
+        </table>
+
+    </body>
+</html>

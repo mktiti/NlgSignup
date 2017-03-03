@@ -74,6 +74,31 @@ interface Repo<E> {
         return null;
     }
 
+    default boolean runUpdate(String update, DBUtil.PrepStatementSetter setter) {
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement preparedStatement = null;
+
+        if (conn == null) {
+            return false;
+        }
+
+        try {
+            preparedStatement = conn.prepareStatement(update);
+            setter.set(preparedStatement);
+            preparedStatement.executeUpdate();
+
+            return true;
+
+        } catch (SQLException e) {
+            System.out.println("Exception while runUpdate, possibly duplicate");
+        } finally {
+            close(preparedStatement);
+            close(conn);
+        }
+
+        return false;
+    }
+
     default Collection<E> getAll() {
         Connection conn = DBUtil.getConnection();
         PreparedStatement preparedStatement = null;
@@ -112,13 +137,7 @@ interface Repo<E> {
     E fromSingleRow(ResultSet resultSet) throws SQLException;
 
     default void close(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        DBUtil.close(closeable);
     }
 
 }

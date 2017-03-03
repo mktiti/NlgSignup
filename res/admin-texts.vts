@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Szövegek</title>
+        <style>
+            #include("style.css")
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+
+        <h2 style="text-align: center">Szövegek</h2>
+        <table class="ctable">
+            <tr>
+                <th>Név</th>
+                <th colspan="2">Szöveg</th>
+            </tr>
+            #foreach( $text in $texts )
+                <form action="/admin/texts/$text.ID" method="POST">
+                    <tr>
+                        <td style="text-align: center"> $text.desc </td>
+                        <td> <textarea name="text" cols="50", rows="10">$text.string</textarea> </td>
+                        <td> <input type="submit" value="Módosítás"> </td>
+                    </tr>
+                </form>
+            #end
+        </table>
+
+    </body>
+</html>

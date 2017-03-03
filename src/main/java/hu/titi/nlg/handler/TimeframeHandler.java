@@ -1,39 +1,81 @@
 package hu.titi.nlg.handler;
 
-import static spark.Spark.*;
-import static hu.titi.nlg.Context.timeframeRepo;
-
 import spark.Request;
 import spark.Response;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import java.util.Map;
+
+import static hu.titi.nlg.Context.*;
+import static spark.Spark.get;
+import static spark.Spark.post;
 
 public class TimeframeHandler {
 
     public TimeframeHandler() {
-        get("/admin/timeframes", (req, res) -> listAll());
+        get("/admin/timeframes", this::listAll);
         post("/admin/timeframes", this::saveTimeframe);
+        post("/admin/timeframes/:tid", this::modifyTimeframe);
+        get("/admin/timeframes/delete/:tid", this::deleteTimeframe);
     }
 
-    private String saveTimeframe(Request req, Response res) {
-        boolean added = timeframeRepo.saveStudent(req.queryParams("from"), req.queryParams("to"));
-        res.redirect("/admin/timeframes");
-        return added ? "Timeframe added" : "Failed to add timeframe";
+    private String deleteTimeframe(Request request, Response response) {
+        String id = request.params(":tid");
+
+        try {
+            timeframeRepo.deleteTimeframe(Integer.parseInt(id));
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+        } finally {
+            response.redirect("/admin/timeframes");
+        }
+
+        return "";
     }
 
-    private String listAll() {
-        StringBuilder sb = new StringBuilder();
-        timeframeRepo.getAll().stream().forEach(tf -> sb.append(tf.getId())
-                     .append(" [").append(tf.getStart()).append(" - ").append(tf.getEnd()).append("]")
-                     .append("<br>"));
+    private String saveTimeframe(Request request, Response response) {
+        String startString = request.queryParams("start");
+        String endString = request.queryParams("end");
 
-        sb.append("<form action=\"/admin/timeframes\" method=\"POST\">\n" +
-                "  <br>From:\n" +
-                "  <input type=\"time\" name=\"from\" >\n" +
-                "  To:\n" +
-                "  <input type=\"time\" name=\"to\" >\n" +
-                "  <input type=\"submit\" value=\"Add\">\n" +
-                "</form> ");
+        try {
+            LocalTime start = LocalTime.parse(startString);
+            LocalTime end = LocalTime.parse(endString);
 
-        return sb.toString();
+            timeframeRepo.saveTimeframe(start, end);
+        } catch (DateTimeParseException | NumberFormatException e) {
+            System.out.println("Format exception");
+        } finally {
+            response.redirect("/admin/timeframes");
+        }
+
+        return "";
+    }
+
+    private String modifyTimeframe(Request request, Response response) {
+        String startString = request.queryParams("start");
+        String endString = request.queryParams("end");
+        String idString = request.params(":tid");
+
+        try {
+            LocalTime start = LocalTime.parse(startString);
+            LocalTime end = LocalTime.parse(endString);
+            int id = Integer.parseInt(idString);
+
+            timeframeRepo.updateTimeframe(id, start, end);
+        } catch (DateTimeParseException | NumberFormatException e) {
+            System.out.println("Format exception");
+        } finally {
+            response.redirect("/admin/timeframes");
+        }
+
+        return "";
+    }
+
+    private String listAll(Request request, Response response) {
+        Map<String, Object> model = newModel(request);
+        model.put("timeframes", timeframeRepo.getAll());
+        return render(model, "admin-timeframes.vts");
     }
 
 }

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>$title</title>
+
+        <style media="screen" type="text/css">
+            #include("style.css")
+            .nosignup {
+                background-color: #F75B5B;
+            }
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+        <h2 style="text-align: center">$message</h2>
+
+        <table class="ctable">
+            <tr>
+                <th style="text-align: center">Kezdet</th>
+                <th style="text-align: center">Vég</th>
+                <th style="text-align: left" colspan="2">Esemény</th>
+            </tr>
+
+            #foreach( $pair in $table )
+                #set ( $tf = $pair.key )
+                #set ( $optE = $pair.value )
+                #if( $optE.isPresent() )
+                    <tr>
+                #else
+                    <tr class="nosignup">
+                #end
+                    <td>$tf.start</td>
+                    <td>$tf.end</td>
+
+                    <td>
+                        #if ( $optE.isPresent() )
+                            $optE.get().name
+                        #else
+                            <i>Még nem jelentkeztél</i>
+                        #end
+                    </td>
+
+                    <td><a class="abtn" href="/student/events/$tf.id">Módosítás</a></td>
+                </tr>
+            #end
+        </table>
+
+    </body>
+</html>
