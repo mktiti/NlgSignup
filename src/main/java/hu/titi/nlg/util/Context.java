@@ -10,7 +10,10 @@ import spark.Request;
 import spark.Response;
 import spark.template.velocity.VelocityTemplateEngine;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,25 +28,42 @@ public class Context {
     public static final EventRepo eventRepo = new EventRepo();
 
     public static void main(String[] args) {
-        new Context();
+        new Context(args);
     }
 
-    private Context() {
+    private Context(String[] args) {
 
-        new File("uplod").mkdir();
-        staticFiles.externalLocation("upload");
+        int port = 4567;
+        try {
+            System.out.println(args[0]);
+            port = Integer.parseInt(args[0]);
+        } catch (Exception e) {}
 
-        redirect.get("/", "/login");
-        get("/shutdown", (req, res) -> {stop(); return "Shutting down";});
+        System.out.println("Port: " + port);
+        port(port);
 
-        get("confirmAsk", Context::checkConfirm);
-        get("confirm", Context::confirm);
+        String adminPassword = "adminpassword67";
+        try (BufferedReader br = new BufferedReader(new FileReader("admin.txt"))) {
+            String line = br.readLine();
+            if (line != null && (line = line.trim()).length() > 0) {
+                adminPassword = line;
+                System.out.println("Admin pasword read from file");
+            }
+        } catch (IOException ioe) {
+            System.out.println("Cannot read admin file, using default admin password");
+        }
+
+        DBUtil.init();
 
         new StudentHandler();
         new TimeframeHandler();
         new EventHandler();
         new AdminHandler();
-        new LoginHandler();
+        new LoginHandler(adminPassword);
+        new DeleteHandler();
+
+        redirect.get("/", "/login");
+        //get("/shutdown", (req, res) -> {stop(); return "Shutting down";});
 
         /*
         try {
@@ -57,19 +77,6 @@ public class Context {
 
     public static String render(Map<String, Object> model, String templatePath) {
         return new VelocityTemplateEngine().render(new ModelAndView(model, templatePath));
-    }
-
-    static String checkConfirm(Request request, Response response) {
-        Map<String, Object> model = newModel(request);
-        model.put("confirm", request.session().attribute("confirmReq"));
-        return render(model, "confirm.vts");
-    }
-
-    static String confirm(Request request, Response response) {
-        Map<String, Object> model = newModel(request);
-        model.put("confirm", request.session().attribute("confirmReq"));
-        request.session().removeAttribute("confirmReq");
-        return render(model, "confirm.vts");
     }
 
     public static Map<String, Object> newModel(Request request) {

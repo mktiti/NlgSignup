@@ -33,10 +33,6 @@ public class StudentRepo implements Repo<Student> {
 
     private final static Random random = new Random();
 
-    public Map<TimeFrame, Event> getSignupByTimeframe(int timeframeID) {
-        return null;
-    }
-
     public Optional<Student> getStudentByEmail(String email) {
         if (email == null || email.length() == 0) {
             return Optional.empty();

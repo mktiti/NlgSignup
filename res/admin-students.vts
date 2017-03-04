@@ -20,7 +20,7 @@
             <input type="SUBMIT" value="Importálás">
         </form><br>
         <div style="text-align: center; margin-bottom: 20px">
-            <a class="abtn" href="/admin/students/deleteAll">Összes törlése</a>
+            <a class="abtn" href="/admin/delete/students/deleteAll">Összes törlése</a>
             <a class="abtn" href="/admin/students/diakok.csv">Fájl letöltése</a><br>
         </div>
 
@@ -52,7 +52,7 @@
                     <td> $student.name </td>
                     <td> $student.email </td>
                     <td> $student.code </td>
-                    <td> <a class="abtn" href="/admin/students/delete/$student.id">Törlés</a> </td>
+                    <td> <a class="abtn" href="/admin/delete/students/delete/$student.id">Törlés</a> </td>
                 </tr>
             #end
 

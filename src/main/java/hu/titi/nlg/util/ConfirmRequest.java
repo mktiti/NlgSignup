@@ -5,8 +5,6 @@ public class ConfirmRequest {
     private final String path;
     private final String message;
 
-    public static final Object CONFIRM = new Object();
-
     public ConfirmRequest(String path, String message) {
         this.path = path;
         this.message = message;
@@ -14,7 +12,14 @@ public class ConfirmRequest {
 
     public ConfirmRequest(String path) {
         this.path = path;
-        message = "Biztos vagy benne?";
+        message = null;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public String getPath() {
+        return path;
+    }
 }

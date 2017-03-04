@@ -62,6 +62,10 @@ public class DBUtil {
         }
     }
 
+    static void init() {
+        // Force static initializer to run
+    }
+
     private static void createTable(Connection conn, String query) {
         Statement statement = null;
         try {

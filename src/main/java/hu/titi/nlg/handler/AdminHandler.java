@@ -30,14 +30,6 @@ public class AdminHandler {
         before("/admin", this::filterAdmin);
         before("/admin/*", this::filterAdmin);
 
-        /*
-        before("/admin/students/delete/:id", (req, res) -> {
-            if (req.session().attribute("confirm") != ConfirmRequest.CONFIRM) {
-                req.session().attribute("confirmAsk", new ConfirmRequest(req.servletPath()));
-                res.redirect("/confirmAsk");
-            }
-        });
-*/
         get("/admin", this::mainPage);
         get("/admin/students", this::listStudents);
         get("/admin/students/diakok.csv", this::getFile);

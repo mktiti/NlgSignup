@@ -24,8 +24,10 @@ public class EventRepo implements Repo<Event> {
     private static final String DELETE_EXISTING_SIGNUP = "DELETE FROM SIGNUP WHERE STUDENT_ID = ? AND EVENT_ID = (SELECT EVENT.ID FROM SIGNUP, EVENT WHERE SIGNUP.EVENT_ID = EVENT.ID AND STUDENT_ID = ? AND EVENT.ID <> ? AND TIMEFRAME_ID = (SELECT TIMEFRAME_ID FROM EVENT WHERE ID = ?))";
     private static final String SELECT_HAS_AVAILABLE = "SELECT SIGNUPS < MAX_SIGNUPS FROM EVENT_SIGNUPS where event_ID = ?";
 
+    /*
     private static final String INSERT_DUMMY = "INSERT INTO SIGNUP VALUES (?, 0)";
     private static final String UPDATE_DUMMY = "UPDATE SIGNUP SET STUDENT_ID = ? WHERE EVENT_ID = ? AND STUDENT_ID = 0";
+*/
 
     private static final String DELETE_SQL = "DELETE FROM EVENT WHERE ID = ?";
 
@@ -87,6 +89,7 @@ public class EventRepo implements Repo<Event> {
         return getMultipleFromSQL(SELECT_BY_TIMEFRAME, ps -> ps.setInt(1, tf.getId()));
     }
 
+    /*
     private void debugSleep(int sID) {
         if (sID == 10612) {
             try {
@@ -96,6 +99,7 @@ public class EventRepo implements Repo<Event> {
             }
         }
     }
+    */
 
     public boolean signUp(int eventId, int studentId) {
 
@@ -135,9 +139,9 @@ public class EventRepo implements Repo<Event> {
             deletePrevious.setInt(3, eventId);
             deletePrevious.setInt(4, eventId);
 
-            System.out.println("Prepared");
+        //    System.out.println("Prepared");
 
-            debugSleep(studentId);
+        //    debugSleep(studentId);
 
             synchronized (getLock(eventId)) {
                 //System.out.println(studentId + " - inserting dummy");
@@ -146,37 +150,37 @@ public class EventRepo implements Repo<Event> {
 
                 //debugSleep(studentId);
 
-                System.out.println(studentId + " - checking");
+          //      System.out.println(studentId + " - checking");
                 checkResult = check.executeQuery();
-                System.out.println(studentId + " - checking queried");
+          //      System.out.println(studentId + " - checking queried");
                 if (!(checkResult.next() && checkResult.getBoolean(1))) {
-                    System.out.println(studentId + " - no available place");
+            //        System.out.println(studentId + " - no available place");
                 //    conn.rollback();
                     return false;
                 }
 
-                debugSleep(studentId);
+            //    debugSleep(studentId);
 
-                System.out.println(studentId + " - inserting new");
+           //     System.out.println(studentId + " - inserting new");
                 insertNew.executeUpdate();
-                System.out.println(studentId + " - inserted new");
+           //     System.out.println(studentId + " - inserted new");
 
 
                 //System.out.println(studentId + " - updating dummy");
                 //updateDummy.executeUpdate();
                 //System.out.println(studentId + " - updated dummy");
 
-                debugSleep(studentId);
+            //    debugSleep(studentId);
 
-                System.out.println(studentId + " - deleting previous");
+           //     System.out.println(studentId + " - deleting previous");
                 deletePrevious.executeUpdate();
-                System.out.println(studentId + " - deleting previous");
+           //     System.out.println(studentId + " - deleting previous");
 
-                debugSleep(studentId);
+            //    debugSleep(studentId);
 
-                System.out.println(studentId + " - commiting");
+            //    System.out.println(studentId + " - commiting");
                 conn.commit();
-                System.out.println(studentId + " - commited");
+            //    System.out.println(studentId + " - commited");
             }
             return true;
 

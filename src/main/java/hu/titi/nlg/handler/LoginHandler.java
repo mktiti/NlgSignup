@@ -16,7 +16,11 @@ import static spark.Spark.*;
 
 public class LoginHandler {
 
-    public LoginHandler() {
+    private final String adminPassword;
+
+    public LoginHandler(String adminPassword) {
+
+        this.adminPassword = adminPassword;
 
         path("/login", () -> {
             before("", (req, res) -> {
@@ -38,17 +42,17 @@ public class LoginHandler {
 
         if (email != null && pass != null && (email = email.trim()).length() > 0 && (pass = pass.trim()).length() > 0 && email.length() < 100 && pass.length() < 100) {
             if ("admin".equals(email)) {
-                if ("adminpassword67".equals(pass)) {
+                if (pass.equals(adminPassword)) {
                     request.session().attribute("role", AdminHandler.UserRole.ADMIN);
                     request.session().attribute("uname", "Admin");
                     response.redirect("/");
                 } else {
-                    request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, "hint: name pswd szám"));
+                    request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, "ld: admin.txt"));
                 }
             } else {
                 Optional<Student> student = Context.studentRepo.getStudentByEmail(email);
 
-                if (student.isPresent() && pass.equals(student.get().getCode())) {
+                if (student.isPresent() && pass.toUpperCase().equals(student.get().getCode().toUpperCase())) {
                     request.session().attribute("role", AdminHandler.UserRole.STUDENT);
                     request.session().attribute("studentID", student.get().getId());
                     request.session().attribute("uname", student.get().getName());

@@ -48,7 +48,7 @@
                     <td> $event.name </td>
                     <td> $taken </td>
                     <td> $event.maxStudents </td>
-                    <td> <a class="abtn" href="/admin/events/delete/$event.id">Törlés</a> </td>
+                    <td> <a class="abtn" href="/admin/delete/events/delete/$event.id">Törlés</a> </td>
                     <td> <a class="abtn" href="/admin/events/$event.id/report.csv">CSV Kivonat</a> </td>
                 </tr>
             #end

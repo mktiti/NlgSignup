@@ -4,15 +4,35 @@
         <meta charset="utf-8" />
         <title>Megerősíítés</title>
         <style>
-                #include("style.css")
-            </style>
+            #include("style.css")
+            .abtn {
+                margin-right: 25px;
+                margin-left: 25px;
+                font-size: x-large;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            #serious {
+                margin-left: 20%;
+                margin-right: 20%;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                background-color: #F75B5B;
+                color: white;
+            }
+        </style>
     </head>
     <body>
         #parse("header.vts")
 
-        <h2 style="text-align: center"> $confirm.message </h2>
+        <h2 id="serious" style="text-align: center"> Biztos hogy törölni akarod? </h2>
+        #if( $confirm.message )
+            <h2 style="text-align: center"> $confirm.message </h2>
+        #end
 
-        <a class="abtn" href="javascript:history.back()">Nem</a>
-        <a class="abtn" href="$confirm.path">Igen</a>
+        <div style="text-align: center">
+            <a class="abtn" href="javascript:history.back()">Nem</a>
+            <a class="abtn" href="$confirm.path">Igen</a>
+        </div>
     </body>
 </html>
