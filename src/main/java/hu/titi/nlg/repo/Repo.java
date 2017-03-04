@@ -1,6 +1,6 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.DBUtil;
+import hu.titi.nlg.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

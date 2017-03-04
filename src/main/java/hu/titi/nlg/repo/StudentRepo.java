@@ -1,7 +1,7 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.Context;
-import hu.titi.nlg.DBUtil;
+import hu.titi.nlg.util.Context;
+import hu.titi.nlg.util.DBUtil;
 import hu.titi.nlg.entity.Event;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.entity.TimeFrame;
@@ -116,11 +116,11 @@ public class StudentRepo implements Repo<Student> {
                 preparedStatement.setString(2, s.getEmail());
                 preparedStatement.setString(3, s.getCode());
                 preparedStatement.addBatch();
-
             }
 
             preparedStatement.executeBatch();
             conn.commit();
+            return true;
         } catch (Exception e) {
             try {
                 conn.rollback();

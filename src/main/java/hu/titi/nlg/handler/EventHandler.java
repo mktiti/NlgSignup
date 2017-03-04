@@ -4,13 +4,14 @@ import hu.titi.nlg.entity.Event;
 import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.entity.TimeFrame;
+import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static hu.titi.nlg.Context.*;
+import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.*;
 
 public class EventHandler {
@@ -52,11 +53,14 @@ public class EventHandler {
             students = studentRepo.getEventSignups(event.getId());
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
-            halt(400);
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, "rossz azonosító"));
+            response.redirect("/admin/events");
             return "";
         } catch (NoSuchElementException nsee) {
             System.out.println("No event by id");
-            halt(404);
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, null));
+
+            response.redirect("/admin/events");
             return "";
         }
 
@@ -75,17 +79,20 @@ public class EventHandler {
         }
     }
 
-    private String saveEvent(Request req, Response res) {
+    private String saveEvent(Request request, Response response) {
         try {
-            String name = req.queryParams("name");
-            int max = Integer.parseInt(req.queryParams("max"));
-            int tfId = Integer.parseInt(req.queryParams("tf"));
+            String name = request.queryParams("name");
+            int max = Integer.parseInt(request.queryParams("max"));
+            int tfId = Integer.parseInt(request.queryParams("tf"));
 
-            eventRepo.saveEvent(name, max, tfId);
+            if (!eventRepo.saveEvent(name, max, tfId)) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
+            }
         } catch (NumberFormatException nfe) {
             System.out.println("Number format Exception");
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, "rossz azonosító"));
         }
-        res.redirect("/admin/events");
+        response.redirect("/admin/events");
         return "";
     }
 
@@ -93,8 +100,11 @@ public class EventHandler {
         String id = request.params(":eid");
 
         try {
-            eventRepo.deleteEvent(Integer.parseInt(id));
+            if (!eventRepo.deleteEvent(Integer.parseInt(id))) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
+            }
         } catch (NumberFormatException nfe) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, "rossz azonosító"));
             System.out.println("Number format exception");
         } finally {
             response.redirect("/admin/events");
@@ -110,9 +120,12 @@ public class EventHandler {
         try {
             int eventID = Integer.parseInt(eventString);
 
-            eventRepo.signUp(eventID, studentID);
+            if (!eventRepo.signUp(eventID, studentID)) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.SIGNUP, null));
+            }
 
         } catch (NumberFormatException nfe) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.SIGNUP, "nem lézető esemény"));
             System.out.println("NumberFormat error");
         }
 
@@ -125,7 +138,7 @@ public class EventHandler {
         try {
             Optional<TimeFrame> otf = timeframeRepo.getTimeframeById(Integer.parseInt(sTFID));
             if (!otf.isPresent()) {
-                halt(500);
+                response.redirect("/student");
             }
 
             TimeFrame tf = otf.get();

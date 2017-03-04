@@ -1,6 +1,6 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.DBUtil;
+import hu.titi.nlg.util.DBUtil;
 
 import java.sql.*;
 
@@ -113,12 +113,12 @@ public class TextManager {
         }
     }
 
-    public static void updateText(Text text, String s) {
+    public static boolean updateText(Text text, String s) {
         text.setString(s);
 
         Connection conn = DBUtil.getConnection();
         if (conn == null) {
-            return;
+            return false;
         }
 
         PreparedStatement preparedStatement = null;
@@ -127,12 +127,15 @@ public class TextManager {
             preparedStatement.setString(1, text.getString());
             preparedStatement.setInt(2, text.getID());
             preparedStatement.executeUpdate();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             DBUtil.close(preparedStatement);
             DBUtil.close(conn);
         }
+
+        return false;
     }
 
 }

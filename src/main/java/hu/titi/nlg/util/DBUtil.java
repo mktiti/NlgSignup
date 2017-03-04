@@ -1,4 +1,4 @@
-package hu.titi.nlg;
+package hu.titi.nlg.util;
 
 import hu.titi.nlg.repo.TextManager;
 

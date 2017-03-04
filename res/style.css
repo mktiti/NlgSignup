@@ -21,3 +21,9 @@
 body {
     margin: 0;
 }
+#header_table {
+    width: 100%;
+    font-size: x-large;
+    padding: 15px 40px 20px 40px;
+    border-bottom: solid black 5px
+}

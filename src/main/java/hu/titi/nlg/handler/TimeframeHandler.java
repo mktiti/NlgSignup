@@ -1,5 +1,6 @@
 package hu.titi.nlg.handler;
 
+import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
 
@@ -7,7 +8,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
 
-import static hu.titi.nlg.Context.*;
+import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
@@ -24,7 +25,9 @@ public class TimeframeHandler {
         String id = request.params(":tid");
 
         try {
-            timeframeRepo.deleteTimeframe(Integer.parseInt(id));
+            if (!timeframeRepo.deleteTimeframe(Integer.parseInt(id))) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
+            }
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
         } finally {
@@ -42,8 +45,11 @@ public class TimeframeHandler {
             LocalTime start = LocalTime.parse(startString);
             LocalTime end = LocalTime.parse(endString);
 
-            timeframeRepo.saveTimeframe(start, end);
+            if (!timeframeRepo.saveTimeframe(start, end)) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
+            }
         } catch (DateTimeParseException | NumberFormatException e) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
             System.out.println("Format exception");
         } finally {
             response.redirect("/admin/timeframes");
@@ -62,8 +68,11 @@ public class TimeframeHandler {
             LocalTime end = LocalTime.parse(endString);
             int id = Integer.parseInt(idString);
 
-            timeframeRepo.updateTimeframe(id, start, end);
+            if (!timeframeRepo.updateTimeframe(id, start, end)) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.MODIFY, null));
+            }
         } catch (DateTimeParseException | NumberFormatException e) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.MODIFY, null));
             System.out.println("Format exception");
         } finally {
             response.redirect("/admin/timeframes");

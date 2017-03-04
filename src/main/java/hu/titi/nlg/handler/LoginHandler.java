@@ -1,15 +1,16 @@
 package hu.titi.nlg.handler;
 
-import hu.titi.nlg.Context;
+import hu.titi.nlg.util.Context;
 import hu.titi.nlg.entity.Student;
+import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static hu.titi.nlg.Context.newModel;
-import static hu.titi.nlg.Context.render;
+import static hu.titi.nlg.util.Context.newModel;
+import static hu.titi.nlg.util.Context.render;
 import static hu.titi.nlg.handler.AdminHandler.UserRole;
 import static spark.Spark.*;
 
@@ -42,7 +43,7 @@ public class LoginHandler {
                     request.session().attribute("uname", "Admin");
                     response.redirect("/");
                 } else {
-                    response.redirect("/login");
+                    request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, "hint: name pswd szám"));
                 }
             } else {
                 Optional<Student> student = Context.studentRepo.getStudentByEmail(email);
@@ -53,9 +54,11 @@ public class LoginHandler {
                     request.session().attribute("uname", student.get().getName());
                     response.redirect("/");
                 } else {
-                    response.redirect("/login");
+                    request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, null));
                 }
             }
+        } else {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, null));
         }
 
         response.redirect("/login");

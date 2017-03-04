@@ -2,6 +2,8 @@ package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.repo.TextManager;
+import hu.titi.nlg.util.ConfirmRequest;
+import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
 
@@ -12,8 +14,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-import static hu.titi.nlg.Context.*;
+import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.*;
 
 public class AdminHandler {
@@ -27,6 +30,14 @@ public class AdminHandler {
         before("/admin", this::filterAdmin);
         before("/admin/*", this::filterAdmin);
 
+        /*
+        before("/admin/students/delete/:id", (req, res) -> {
+            if (req.session().attribute("confirm") != ConfirmRequest.CONFIRM) {
+                req.session().attribute("confirmAsk", new ConfirmRequest(req.servletPath()));
+                res.redirect("/confirmAsk");
+            }
+        });
+*/
         get("/admin", this::mainPage);
         get("/admin/students", this::listStudents);
         get("/admin/students/diakok.csv", this::getFile);
@@ -78,10 +89,13 @@ public class AdminHandler {
             request.attribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/tmp"));
             Part file = request.raw().getPart("file");
 
-            studentRepo.saveFromStream(file.getInputStream());
+            if (!studentRepo.saveFromStream(file.getInputStream())) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.UPLOAD, null));
+            }
 
         } catch (IOException | ServletException e) {
             e.printStackTrace();
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.UPLOAD, null));
         }
 
         response.redirect("/admin/students");
@@ -89,7 +103,9 @@ public class AdminHandler {
     }
 
     private String deleteAllAtudents(Request request, Response response) {
-        studentRepo.deleteAll();
+        if (!studentRepo.deleteAll()) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
+        }
         response.redirect("/admin/students");
         return "";
     }
@@ -98,9 +114,12 @@ public class AdminHandler {
         String id = request.params(":id");
 
         try {
-            studentRepo.deleteStudent(Integer.parseInt(id));
+            if (!studentRepo.deleteStudent(Integer.parseInt(id))) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
+            }
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, "rossz azonosító"));
         } finally {
             response.redirect("/admin/students");
         }
@@ -108,14 +127,18 @@ public class AdminHandler {
         return "";
     }
 
-    private String saveStudent(Request req, Response res) {
-        String name = req.queryParams("name");
-        String email = req.queryParams("email");
+    private String saveStudent(Request request, Response response) {
+        String name = request.queryParams("name");
+        String email = request.queryParams("email");
 
         if (name != null && (name = name.trim()).length() > 0 && email != null && (email = email.trim()).length() > 0) {
-            studentRepo.saveStudent(name, email);
+            if (!studentRepo.saveStudent(name, email)) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
+            }
+        } else {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, "hiányző adat(ok)"));
         }
-        res.redirect("/admin/students");
+        response.redirect("/admin/students");
         return "";
     }
 
@@ -129,22 +152,25 @@ public class AdminHandler {
         String string = request.queryParams("text");
         String tid = request.params(":tid");
 
-
         try {
             if (string == null || tid == null || (string = string.trim()).length() == 0) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.MODIFY, "üres szöveg"));
                 return "";
             }
 
             int id = Integer.parseInt(tid);
             for (TextManager.Text text : TextManager.Text.values()) {
                 if (text.getID() == id) {
-                    TextManager.updateText(text, string);
+                    if (!TextManager.updateText(text, string)) {
+                        request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.MODIFY, null));
+                    }
                     break;
                 }
             }
 
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.MODIFY, "rossz azonosító"));
         } finally {
             response.redirect("/admin/texts");
         }

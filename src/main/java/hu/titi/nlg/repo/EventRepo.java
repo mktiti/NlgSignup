@@ -1,6 +1,6 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.DBUtil;
+import hu.titi.nlg.util.DBUtil;
 import hu.titi.nlg.entity.Event;
 import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.TimeFrame;
@@ -9,9 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 
 public class EventRepo implements Repo<Event> {
 
@@ -24,25 +22,27 @@ public class EventRepo implements Repo<Event> {
     private static final String INSERT_NEW = "INSERT INTO EVENT (NAME, TIMEFRAME_ID, MAX_SIGNUPS) VALUES(?, ?, ?)";
 
     private static final String DELETE_EXISTING_SIGNUP = "DELETE FROM SIGNUP WHERE STUDENT_ID = ? AND EVENT_ID = (SELECT EVENT.ID FROM SIGNUP, EVENT WHERE SIGNUP.EVENT_ID = EVENT.ID AND STUDENT_ID = ? AND EVENT.ID <> ? AND TIMEFRAME_ID = (SELECT TIMEFRAME_ID FROM EVENT WHERE ID = ?))";
-    private static final String SELECT_HAS_AVAILABLE = "SELECT SIGNUPS <= MAX_SIGNUPS FROM EVENT_SIGNUPS where event_ID = ?";
+    private static final String SELECT_HAS_AVAILABLE = "SELECT SIGNUPS < MAX_SIGNUPS FROM EVENT_SIGNUPS where event_ID = ?";
 
     private static final String INSERT_DUMMY = "INSERT INTO SIGNUP VALUES (?, 0)";
     private static final String UPDATE_DUMMY = "UPDATE SIGNUP SET STUDENT_ID = ? WHERE EVENT_ID = ? AND STUDENT_ID = 0";
 
     private static final String DELETE_SQL = "DELETE FROM EVENT WHERE ID = ?";
 
-    /*
     private static final Map<Integer, Object> eventLocks = new HashMap<>();
 
-    static {
-        refreshEventlocks();
+    private Object getLock(int eventId) {
+        synchronized (eventLocks) {
+            eventLocks.putIfAbsent(eventId, new Object());
+            return eventLocks.get(eventId);
+        }
     }
 
-    private static void refreshEventlocks() {
-        eventLocks.clear();
-        Context.timeframeRepo.getAll().stream().forEach(tf -> eventLocks.put(tf.getID(), new Object()));
+    private void eventDeleted(int eventId) {
+        synchronized (eventLocks) {
+            eventLocks.remove(eventId);
+        }
     }
-    */
 
     public Optional<Event> getEventById(int id) {
         return getSingleFromSQL(SELECT_BY_ID, ps -> ps.setInt(1, id));
@@ -88,7 +88,7 @@ public class EventRepo implements Repo<Event> {
     }
 
     private void debugSleep(int sID) {
-        if (false && sID == 1) {
+        if (sID == 10612) {
             try {
                 Thread.sleep(4000);
             } catch (InterruptedException e) {
@@ -104,9 +104,10 @@ public class EventRepo implements Repo<Event> {
             return false;
         }
 
-        PreparedStatement insertDummy = null;
+        //PreparedStatement insertDummy = null;
         PreparedStatement check = null;
-        PreparedStatement updateDummy = null;
+        //PreparedStatement updateDummy = null;
+        PreparedStatement insertNew = null;
         PreparedStatement deletePrevious = null;
         ResultSet checkResult = null;
 
@@ -114,15 +115,19 @@ public class EventRepo implements Repo<Event> {
         try {
             conn.setAutoCommit(false);
 
-            insertDummy = conn.prepareStatement(INSERT_DUMMY);
-            insertDummy.setInt(1, eventId);
+            //insertDummy = conn.prepareStatement(INSERT_DUMMY);
+            //insertDummy.setInt(1, eventId);
 
             check = conn.prepareStatement(SELECT_HAS_AVAILABLE);
             check.setInt(1, eventId);
 
-            updateDummy = conn.prepareStatement(UPDATE_DUMMY);
+            /*updateDummy = conn.prepareStatement(UPDATE_DUMMY);
             updateDummy.setInt(1, studentId);
             updateDummy.setInt(2, eventId);
+*/
+            insertNew = conn.prepareStatement("INSERT INTO SIGNUP VALUES (?, ?)");
+            insertNew.setInt(1, eventId);
+            insertNew.setInt(2, studentId);
 
             deletePrevious = conn.prepareStatement(DELETE_EXISTING_SIGNUP);
             deletePrevious.setInt(1, studentId);
@@ -134,39 +139,45 @@ public class EventRepo implements Repo<Event> {
 
             debugSleep(studentId);
 
-            System.out.println(studentId + " - inserting dummy");
-            insertDummy.executeUpdate();
-            System.out.println(studentId + " - inserted dummy");
+            synchronized (getLock(eventId)) {
+                //System.out.println(studentId + " - inserting dummy");
+                //insertDummy.executeUpdate();
+                //System.out.println(studentId + " - inserted dummy");
 
-            debugSleep(studentId);
+                //debugSleep(studentId);
 
-            System.out.println(studentId + " - checking");
-            checkResult = check.executeQuery();
-            System.out.println(studentId + " - checking queried");
-            if (!(checkResult.next() && checkResult.getBoolean(1))) {
-                System.out.println(studentId + " - no available place");
-                conn.rollback();
-                return false;
+                System.out.println(studentId + " - checking");
+                checkResult = check.executeQuery();
+                System.out.println(studentId + " - checking queried");
+                if (!(checkResult.next() && checkResult.getBoolean(1))) {
+                    System.out.println(studentId + " - no available place");
+                //    conn.rollback();
+                    return false;
+                }
+
+                debugSleep(studentId);
+
+                System.out.println(studentId + " - inserting new");
+                insertNew.executeUpdate();
+                System.out.println(studentId + " - inserted new");
+
+
+                //System.out.println(studentId + " - updating dummy");
+                //updateDummy.executeUpdate();
+                //System.out.println(studentId + " - updated dummy");
+
+                debugSleep(studentId);
+
+                System.out.println(studentId + " - deleting previous");
+                deletePrevious.executeUpdate();
+                System.out.println(studentId + " - deleting previous");
+
+                debugSleep(studentId);
+
+                System.out.println(studentId + " - commiting");
+                conn.commit();
+                System.out.println(studentId + " - commited");
             }
-
-            debugSleep(studentId);
-
-            System.out.println(studentId + " - updating dummy");
-            updateDummy.executeUpdate();
-            System.out.println(studentId + " - updated dummy");
-
-            debugSleep(studentId);
-
-            System.out.println(studentId + " - deleting previous");
-            deletePrevious.executeUpdate();
-            System.out.println(studentId + " - deleting previous");
-
-            debugSleep(studentId);
-
-            System.out.println(studentId + " - commiting");
-            conn.commit();
-            System.out.println(studentId + " - commited");
-
             return true;
 
         } catch (SQLException e) {
@@ -184,10 +195,10 @@ public class EventRepo implements Repo<Event> {
                 e.printStackTrace();
             }
             close(deletePrevious);
-            close(updateDummy);
+            close(insertNew);
             close(checkResult);
             close(check);
-            close(insertDummy);
+            //close(insertDummy);
             try {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
@@ -224,6 +235,10 @@ public class EventRepo implements Repo<Event> {
     }
 
     public boolean deleteEvent(int id) {
-        return runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
+        boolean deleted = runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
+        if (deleted) {
+            eventDeleted(id);
+        }
+        return deleted;
     }
 }

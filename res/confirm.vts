@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Megerősíítés</title>
+        <style>
+                #include("style.css")
+            </style>
+    </head>
+    <body>
+        #parse("header.vts")
+
+        <h2 style="text-align: center"> $confirm.message </h2>
+
+        <a class="abtn" href="javascript:history.back()">Nem</a>
+        <a class="abtn" href="$confirm.path">Igen</a>
+    </body>
+</html>

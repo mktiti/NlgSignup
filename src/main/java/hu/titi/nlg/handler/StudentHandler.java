@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static hu.titi.nlg.Context.*;
+import static hu.titi.nlg.util.Context.*;
 import static hu.titi.nlg.handler.AdminHandler.UserRole;
 import static spark.Spark.*;
 
@@ -39,7 +39,7 @@ public class StudentHandler {
             return render(model, "student-main-page.vts");
         }
 
-        halt(401);
+        response.redirect("/logout");
         return "";
     }
 
