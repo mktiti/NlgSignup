@@ -12,7 +12,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static hu.titi.nlg.util.Context.*;
-import static spark.Spark.*;
+import static spark.Spark.get;
+import static spark.Spark.post;
 
 public class EventHandler {
 

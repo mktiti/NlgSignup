@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class TimeframeRepo implements Repo<TimeFrame> {

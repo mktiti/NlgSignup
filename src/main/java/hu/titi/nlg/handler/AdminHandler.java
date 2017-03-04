@@ -2,7 +2,6 @@ package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.repo.TextManager;
-import hu.titi.nlg.util.ConfirmRequest;
 import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.*;

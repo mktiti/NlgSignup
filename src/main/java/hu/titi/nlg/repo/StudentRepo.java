@@ -1,10 +1,8 @@
 package hu.titi.nlg.repo;
 
+import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.util.Context;
 import hu.titi.nlg.util.DBUtil;
-import hu.titi.nlg.entity.Event;
-import hu.titi.nlg.entity.Student;
-import hu.titi.nlg.entity.TimeFrame;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -14,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;

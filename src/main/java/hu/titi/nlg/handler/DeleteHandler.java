@@ -8,7 +8,7 @@ import java.util.Map;
 
 import static hu.titi.nlg.util.Context.newModel;
 import static hu.titi.nlg.util.Context.render;
-import static spark.Spark.*;
+import static spark.Spark.get;
 
 public class DeleteHandler {
 

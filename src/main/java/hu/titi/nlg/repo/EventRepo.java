@@ -1,9 +1,9 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.util.DBUtil;
 import hu.titi.nlg.entity.Event;
 import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.TimeFrame;
+import hu.titi.nlg.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

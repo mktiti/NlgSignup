@@ -1,7 +1,7 @@
 package hu.titi.nlg.handler;
 
-import hu.titi.nlg.util.Context;
 import hu.titi.nlg.entity.Student;
+import hu.titi.nlg.util.Context;
 import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
@@ -9,9 +9,9 @@ import spark.Response;
 import java.util.Map;
 import java.util.Optional;
 
+import static hu.titi.nlg.handler.AdminHandler.UserRole;
 import static hu.titi.nlg.util.Context.newModel;
 import static hu.titi.nlg.util.Context.render;
-import static hu.titi.nlg.handler.AdminHandler.UserRole;
 import static spark.Spark.*;
 
 public class LoginHandler {

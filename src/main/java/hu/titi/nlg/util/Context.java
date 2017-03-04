@@ -7,17 +7,16 @@ import hu.titi.nlg.repo.TextManager;
 import hu.titi.nlg.repo.TimeframeRepo;
 import spark.ModelAndView;
 import spark.Request;
-import spark.Response;
 import spark.template.velocity.VelocityTemplateEngine;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static spark.Spark.*;
+import static spark.Spark.port;
+import static spark.Spark.redirect;
 
 public class Context {
 
