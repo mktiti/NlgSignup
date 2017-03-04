@@ -43,8 +43,4 @@ public class Event implements Comparable<Event> {
     public String toString() {
         return "Event [" + id + "] {" + name + " (" + maxStudents + ")}";
     }
-
-    public String toHtml() {
-        return "<h2>" + name + " [" + maxStudents + "]</h2><br>";
-    }
 }

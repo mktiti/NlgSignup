@@ -27,7 +27,7 @@ public class EventRepo implements Repo<Event> {
     /*
     private static final String INSERT_DUMMY = "INSERT INTO SIGNUP VALUES (?, 0)";
     private static final String UPDATE_DUMMY = "UPDATE SIGNUP SET STUDENT_ID = ? WHERE EVENT_ID = ? AND STUDENT_ID = 0";
-*/
+    */
 
     private static final String DELETE_SQL = "DELETE FROM EVENT WHERE ID = ?";
 
@@ -217,15 +217,12 @@ public class EventRepo implements Repo<Event> {
 
     public boolean saveEvent(String name, int max, int tfId) {
         final String trimmedName;
-        if (name == null || (trimmedName = name.trim()).length() <= 0 || max <= 0) {
-            return false;
-        }
-
-        return runUpdate(INSERT_NEW, ps -> {
+        return !(name == null || (trimmedName = name.trim()).length() <= 0 || max <= 0) && runUpdate(INSERT_NEW, ps -> {
             ps.setString(1, trimmedName);
             ps.setInt(2, tfId);
             ps.setInt(3, max);
         });
+
     }
 
     @Override

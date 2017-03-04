@@ -47,12 +47,9 @@ public class StudentHandler {
         Object oRole = request.session().attribute("role");
         Object oID = request.session().attribute("studentID");
 
-        int id;
         if (!(oID instanceof Integer)) {
             request.session().removeAttribute("role");
             request.session().removeAttribute("studentID");
-        } else {
-            id = (Integer)oID;
         }
 
         UserRole role;

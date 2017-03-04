@@ -51,7 +51,7 @@ public class StudentRepo implements Repo<Student> {
     }
 
     public boolean deleteAll() {
-        return runUpdate(DELETE_ALL_SQL, p -> {;});
+        return runUpdate(DELETE_ALL_SQL, p -> {});
     }
 
     private static String generatePass() {

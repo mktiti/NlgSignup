@@ -45,9 +45,9 @@ public class EventHandler {
     }
 
     private String getReportFile(Request request, Response response) {
-        Event event = null;
-        TimeFrame tf = null;
-        Collection<Student> students = null;
+        Event event;
+        TimeFrame tf;
+        Collection<Student> students;
         try {
             event = eventRepo.getEventById(Integer.parseInt(request.params(":eid"))).get();
             tf = timeframeRepo.getTimeframeById(event.getTimeFrameId()).get();
@@ -115,7 +115,6 @@ public class EventHandler {
     }
 
     private String signUp(Request request, Response response) {
-        long start = System.currentTimeMillis();
         String eventString = request.params(":eid");
         int studentID = request.session().attribute("studentID");
         try {
