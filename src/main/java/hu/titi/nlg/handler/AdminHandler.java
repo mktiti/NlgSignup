@@ -80,7 +80,7 @@ public class AdminHandler {
             Part file = request.raw().getPart("file");
 
             if (!studentRepo.saveFromStream(file.getInputStream())) {
-                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.UPLOAD, null));
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.UPLOAD, "lehet hogy valamielyik email cím már létezik"));
             }
 
         } catch (IOException | ServletException e) {

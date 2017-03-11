@@ -120,7 +120,7 @@ public class StudentRepo implements Repo<Student> {
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
-            e.printStackTrace();
+            System.out.println("Exception while inserting students - possibly duplicate email");
         } finally {
             close(preparedStatement);
             close(conn);
