@@ -62,7 +62,7 @@
 
             #foreach( $student in $students )
                 <tr>
-                    <td> $student.name </td>
+                    <td><a href="/admin/students/$student.id">$student.name</a></td>
                     <td> $student.email </td>
                     <td colspan="2" style="text-align: center"><a href="/admin/classes/$student.aClass.year/$student.aClass.sign"> $student.aClass </a></td>
                     <td> $student.code </td>

@@ -29,7 +29,7 @@
                 #set( $student = $pair.key )
                 #set( $signups = $pair.value )
                 <tr>
-                    <td>$student.name</td>
+                    <td><a href="/admin/students/$student.id">$student.name</a></td>
                     <td>$student.email</td>
                     #if ( $signups < $tfnumber )
                         <td class="nosignup">

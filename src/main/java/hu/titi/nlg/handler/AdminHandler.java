@@ -1,6 +1,7 @@
 package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.Class;
+import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.repo.TextManager;
 import hu.titi.nlg.util.ErrorReport;
@@ -14,6 +15,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.*;
@@ -39,6 +42,7 @@ public class AdminHandler {
         post("/admin/students/upload", this::studentUpload);
         get("/admin/students/delete/:id", this::deleteStudent);
         get("/admin/students/deleteAll", this::deleteAllStudents);
+        get("/admin/students/:id", this::getStudent);
 
     }
 
@@ -150,6 +154,31 @@ public class AdminHandler {
         Map<String, Object> model = newModel(request);
         model.put("students", studentRepo.getAll());
         return render(model, "admin-students.vts");
+    }
+
+    private String getStudent(Request request, Response response) {
+        try {
+            int studentID = Integer.parseInt(request.params(":id"));
+            Optional<Student> student = studentRepo.getStudentById(studentID);
+            if (!student.isPresent()) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, "hibás azonosító"));
+                response.redirect("/admin/students");
+                return "";
+            }
+
+            Map<String, Object> model = newModel(request);
+            model.put("student", student.get());
+            model.put("table", timeframeRepo.getAll().stream()
+                    .map(tf -> new Pair<>(tf, eventRepo.getEventSignups(studentID, tf.getId())))
+                    .collect(Collectors.toList()));
+            return render(model, "admin-student-report.vts");
+
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, "hibás azonosító"));
+            response.redirect("/admin/students");
+            return "";
+        }
     }
 
     private String updateText(Request request, Response response) {
