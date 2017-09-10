@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>$class</title>
+        <style>
+            #include("style.css")
+            .td {
+                text-align: center;
+            }
+            .nosignup {
+                background-color: #F75B5B;
+            }
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+
+        <h2 style="text-align: center">$class</h2>
+        <table class="ctable">
+            <tr>
+                <th>Név</th>
+                <th>E-mail</th>
+                <th>Jelentkezések</th>
+            </tr>
+
+            #foreach( $pair in $students )
+                #set( $student = $pair.key )
+                #set( $signups = $pair.value )
+                <tr>
+                    <td>$student.name</td>
+                    <td>$student.email</td>
+                    #if ( $signups < $tfnumber )
+                        <td class="nosignup">
+                    #else
+                        <td>
+                    #end
+                            $signups / $tfnumber
+                        </td>
+                </tr>
+            #end
+        </table>
+
+    </body>
+</html>

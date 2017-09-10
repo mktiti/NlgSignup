@@ -2,7 +2,8 @@ package hu.titi.nlg.entity;
 
 public final class Class implements Comparable<Class> {
 
-    public enum Year { NINE((short)9), TEN((short)10), ELEVEN((short)11), TWELVE((short)12);
+    public enum Year {
+        NINE((short)9), TEN((short)10), ELEVEN((short)11), TWELVE((short)12);
 
         public final short value;
 
@@ -23,7 +24,9 @@ public final class Class implements Comparable<Class> {
         }
     }
 
-    public enum Sign { A, B, C, D;
+    public enum Sign {
+        A, B, C, D;
+
         static Sign of(char sign) {
             if (sign >= 'A' && sign <= 'D') {
                 return values()[sign - 'A'];

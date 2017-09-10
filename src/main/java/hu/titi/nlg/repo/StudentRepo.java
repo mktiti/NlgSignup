@@ -1,6 +1,7 @@
 package hu.titi.nlg.repo;
 
 import hu.titi.nlg.entity.Class;
+import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.util.Context;
 import hu.titi.nlg.util.DBUtil;
@@ -12,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Random;
@@ -26,6 +28,9 @@ public class StudentRepo implements Repo<Student> {
     private static final String SELECT_BY_ID_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND ID = ?";
     private static final String SELECT_BY_EMAIL_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND EMAIL = ?";
     private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY FROM STUDENT, SIGNUP WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
+    private static final String SELECT_BY_CLASS = "SELECT * FROM STUDENT WHERE ID <> 0 AND CLASS_YEAR = ? AND SIGN = ?";
+
+    private static final String SELECT_BY_CLASS_WITH_TF_NUMBER = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY, COUNT(TIMEFRAME.ID) FROM STUDENT, SIGNUP, EVENT, TIMEFRAME WHERE STUDENT.CLASS_YEAR = ? AND STUDENT.SIGN = ? AND STUDENT.ID = SIGNUP.STUDENT_ID AND SIGNUP.EVENT_ID = EVENT.ID AND EVENT.TIMEFRAME_ID = TIMEFRAME.ID GROUP BY STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY";
 
     private static final String INSERT_NEW_SQL = "INSERT INTO STUDENT (NAME, EMAIL, CLASS_YEAR, SIGN, PASSKEY) VALUES (?, ?, ?, ?, ?)";
 
@@ -43,6 +48,13 @@ public class StudentRepo implements Repo<Student> {
         return getSingleFromSQL(SELECT_BY_ID_SQL, ps -> ps.setInt(1, id));
     }
 
+    public Collection<Student> getStudentsByClass(Class aClass) {
+        return getMultipleFromSQL(SELECT_BY_CLASS, ps -> {
+            ps.setShort(1, aClass.year.value);
+            ps.setString(2, aClass.sign.name());
+        });
+    }
+
     public Collection<Student> getEventSignups(int eventID) {
         return getMultipleFromSQL(SELECT_BY_EVENT_ID, ps -> ps.setInt(1, eventID));
     }
@@ -53,6 +65,38 @@ public class StudentRepo implements Repo<Student> {
 
     public boolean deleteAll() {
         return runUpdate(DELETE_ALL_SQL, p -> {});
+    }
+
+    public Collection<Pair<Student, Integer>> getClassWithTfNumber(Class aClass) {
+        Connection conn = DBUtil.getConnection();
+        if (conn == null) {
+            return null;
+        }
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+
+            preparedStatement = conn.prepareStatement(SELECT_BY_CLASS_WITH_TF_NUMBER);
+            preparedStatement.setShort(1, aClass.year.value);
+            preparedStatement.setString(2, aClass.sign.name());
+
+            resultSet = preparedStatement.executeQuery();
+            Collection<Pair<Student, Integer>> ret = new ArrayList<>(resultSet.getFetchSize());
+            while (resultSet.next()) {
+                ret.add(new Pair<>(fromSingleRow(resultSet), resultSet.getInt(7)));
+            }
+
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
+        }
+
+        return null;
     }
 
     private static String generatePass() {

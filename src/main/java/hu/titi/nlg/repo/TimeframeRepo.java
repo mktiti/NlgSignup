@@ -1,10 +1,9 @@
 package hu.titi.nlg.repo;
 
 import hu.titi.nlg.entity.TimeFrame;
+import hu.titi.nlg.util.DBUtil;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Time;
+import java.sql.*;
 import java.time.LocalTime;
 import java.util.Optional;
 
@@ -15,6 +14,7 @@ public class TimeframeRepo implements Repo<TimeFrame> {
     private static final String INSERT_NEW_SQL = "INSERT INTO TIMEFRAME (START_TIME, END_TIME) VALUES(?, ?)";
     private static final String DELETE_SQL = "DELETE FROM TIMEFRAME WHERE ID = ?";
     private static final String UPDATE_SQL = "UPDATE TIMEFRAME SET START_TIME = ?, END_TIME = ? WHERE ID = ?";
+    private static final String GET_NUMBER_SQL = "SELECT COUNT(ID) FROM TIMEFRAME";
 
     public Optional<TimeFrame> getTimeframeById(int id) {
         return getSingleFromSQL(SELECT_BY_ID_SQL, ps -> ps.setInt(1, id));
@@ -37,6 +37,34 @@ public class TimeframeRepo implements Repo<TimeFrame> {
 
     public boolean deleteTimeframe(int id) {
         return runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
+    }
+
+    public int getTimeframeNumber() {
+        Connection conn = DBUtil.getConnection();
+        if (conn == null) {
+            return 0;
+        }
+
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+
+            statement = conn.createStatement();
+            resultSet = statement.executeQuery(GET_NUMBER_SQL);
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(statement);
+            close(conn);
+        }
+
+        return 0;
     }
 
     @Override

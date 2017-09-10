@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="hu">
+    <head>
+        <meta charset="utf-8" />
+        <title>Osztályok</title>
+        <style>
+            #include("style.css")
+            .td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+
+        #parse("header.vts")
+
+        <h2 style="text-align: center">Osztályok</h2>
+        <table class="ctable">
+            <tr>
+                <th style="border-top: hidden; border-left: hidden"></th>
+                #foreach( $sign in $signs )
+                    <th>$sign</th>
+                #end
+            </tr>
+
+            #foreach( $year in $years )
+                <tr>
+                    <td>$year</td>
+                    #foreach( $sign in $signs )
+                        <td><a href="/admin/classes/$year/$sign">$year.$sign</a></td>
+                    #end
+                </tr>
+            #end
+        </table>
+
+    </body>
+</html>

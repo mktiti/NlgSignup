@@ -20,6 +20,7 @@
         <div class="wrapper"><a href="/admin/texts">Szöveg beállítások</a><br></div>
         <div class="wrapper"><a href="/admin/timeframes">Idősávok</a><br></div>
         <div class="wrapper"><a href="/admin/events">Események</a><br></div>
+        <div class="wrapper"><a href="/admin/classes">Osztályok</a></div>
         <div class="wrapper"><a href="/admin/students">Diákok</a></div>
 
     </body>

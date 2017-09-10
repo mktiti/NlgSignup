@@ -59,6 +59,7 @@ public class Context {
         new StudentHandler();
         new TimeframeHandler();
         new EventHandler();
+        new ClassesHandler();
         new AdminHandler();
         new LoginHandler(adminPassword);
         new DeleteHandler();
@@ -74,6 +75,7 @@ public class Context {
             e.printStackTrace();
         }
         */
+
     }
 
     public static String render(Map<String, Object> model, String templatePath) {

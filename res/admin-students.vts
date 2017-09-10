@@ -64,8 +64,7 @@
                 <tr>
                     <td> $student.name </td>
                     <td> $student.email </td>
-                    <td> $student.aClass.year </td>
-                    <td> $student.aClass.sign </td>
+                    <td colspan="2" style="text-align: center"><a href="/admin/classes/$student.aClass.year/$student.aClass.sign"> $student.aClass </a></td>
                     <td> $student.code </td>
                     <td> <a class="abtn" href="/admin/delete/students/delete/$student.id">Törlés</a> </td>
                 </tr>

@@ -91,7 +91,7 @@ public class EventHandler {
             }
         } catch (NumberFormatException nfe) {
             System.out.println("Number format Exception");
-            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, "rossz azonosító"));
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, "rossz max létszám"));
         }
         response.redirect("/admin/events");
         return "";
