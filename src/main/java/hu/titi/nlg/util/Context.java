@@ -36,7 +36,9 @@ public class Context {
         try {
             System.out.println(args[0]);
             port = Integer.parseInt(args[0]);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.out.print("Port number uninterpretable");
+        }
 
         System.out.println("Port: " + port);
         port(port);
@@ -64,6 +66,7 @@ public class Context {
         redirect.get("/", "/login");
         //get("/shutdown", (req, res) -> {stop(); return "Shutting down";});
 
+
         /*
         try {
             org.apache.derby.tools.ij.main(new String[0]);
@@ -71,7 +74,6 @@ public class Context {
             e.printStackTrace();
         }
         */
-
     }
 
     public static String render(Map<String, Object> model, String templatePath) {

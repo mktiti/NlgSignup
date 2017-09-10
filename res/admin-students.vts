@@ -28,6 +28,8 @@
             <tr>
                 <th>Név</th>
                 <th>E-mail</th>
+                <th>Év</th>>
+                <th>Osztály</th>>
                 <th style="border-right: 0">Jelszó</th>
                 <th style="border-left: 0"></th>
             </tr>
@@ -40,6 +42,17 @@
                     <td>
                         <input type="text" name="email">
                     </td>
+                    <td>
+                        <input type="number" min="9" max="12" name="year">
+                    </td>
+                    <td>
+                        <select name="sign">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </td>
                     <td></td>
                     <td>
                         <input type="SUBMIT" value="Hozzáad">
@@ -51,6 +64,8 @@
                 <tr>
                     <td> $student.name </td>
                     <td> $student.email </td>
+                    <td> $student.aClass.year </td>
+                    <td> $student.aClass.sign </td>
                     <td> $student.code </td>
                     <td> <a class="abtn" href="/admin/delete/students/delete/$student.id">Törlés</a> </td>
                 </tr>

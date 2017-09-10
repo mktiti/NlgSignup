@@ -1,5 +1,6 @@
 package hu.titi.nlg.handler;
 
+import hu.titi.nlg.entity.Class;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.repo.TextManager;
 import hu.titi.nlg.util.ErrorReport;
@@ -37,16 +38,25 @@ public class AdminHandler {
 
         post("/admin/students/upload", this::studentUpload);
         get("/admin/students/delete/:id", this::deleteStudent);
-        get("/admin/students/deleteAll", this::deleteAllAtudents);
+        get("/admin/students/deleteAll", this::deleteAllStudents);
 
     }
 
     private String getFile(Request request, Response response) {
         response.type("application/force-download");
         StringBuilder sb = new StringBuilder();
-        sb.append("Név;Email;Jelszó;\n");
+        sb.append("Név").append(SEPARATOR)
+                .append("Email").append(SEPARATOR)
+                .append("Év").append(SEPARATOR)
+                .append("Osztály").append(SEPARATOR)
+                .append("Jelszó").append(SEPARATOR).append("\n");
         for (Student s : studentRepo.getAll()) {
-            sb.append(s.getName()).append(';').append(s.getEmail()).append(';').append(s.getCode()).append(";\n");
+            Class c = s.getaClass();
+            sb.append(s.getName()).append(SEPARATOR)
+                    .append(s.getEmail()).append(SEPARATOR)
+                    .append(c.getYear()).append(SEPARATOR)
+                    .append(c.sign).append(SEPARATOR)
+                    .append(s.getCode()).append(SEPARATOR).append("\n");
         }
 
         return sb.toString();
@@ -92,7 +102,7 @@ public class AdminHandler {
         return "";
     }
 
-    private String deleteAllAtudents(Request request, Response response) {
+    private String deleteAllStudents(Request request, Response response) {
         if (!studentRepo.deleteAll()) {
             request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
         }
@@ -120,9 +130,13 @@ public class AdminHandler {
     private String saveStudent(Request request, Response response) {
         String name = request.queryParams("name");
         String email = request.queryParams("email");
+        String year = request.queryParams("year");
+        String sign = request.queryParams("sign");
 
-        if (name != null && (name = name.trim()).length() > 0 && email != null && (email = email.trim()).length() > 0) {
-            if (!studentRepo.saveStudent(name, email)) {
+        if (name != null && (name = name.trim()).length() > 0 && email != null && (email = email.trim()).length() > 0 &&
+                year != null && (year = year.trim()).length() > 0 && sign != null && (sign = sign.trim()).length() == 1) {
+
+            if (!studentRepo.saveStudent(name, email, Class.of(Integer.parseInt(year), sign))) {
                 request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
             }
         } else {

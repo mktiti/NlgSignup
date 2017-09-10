@@ -1,5 +1,6 @@
 package hu.titi.nlg.repo;
 
+import hu.titi.nlg.entity.Class;
 import hu.titi.nlg.entity.Student;
 import hu.titi.nlg.util.Context;
 import hu.titi.nlg.util.DBUtil;
@@ -24,9 +25,9 @@ public class StudentRepo implements Repo<Student> {
     private static final String DELETE_ALL_SQL = "DELETE FROM STUDENT WHERE ID <> 0";
     private static final String SELECT_BY_ID_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND ID = ?";
     private static final String SELECT_BY_EMAIL_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND EMAIL = ?";
-    private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.PASSKEY FROM STUDENT, SIGNUP WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
+    private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY FROM STUDENT, SIGNUP WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
 
-    private static final String INSERT_NEW_SQL = "INSERT INTO STUDENT (NAME, EMAIL, PASSKEY) VALUES (?, ?, ?)";
+    private static final String INSERT_NEW_SQL = "INSERT INTO STUDENT (NAME, EMAIL, CLASS_YEAR, SIGN, PASSKEY) VALUES (?, ?, ?, ?, ?)";
 
     private final static Random random = new Random();
 
@@ -75,16 +76,20 @@ public class StudentRepo implements Repo<Student> {
                     String line;
                     while ((line = br.readLine()) != null) {
                         String[] attrs = line.split(String.valueOf(Context.SEPARATOR));
-                        if (attrs.length < 2) {
+                        if (attrs.length < 4) {
                             break;
                         }
 
                         String name = attrs[0];
                         String email = attrs[1];
+                        String year = attrs[2];
+                        String sign = attrs[3];
 
                         if (name != null && (name = name.trim()).length() > 0
-                            && email != null && (email = email.trim()).length() > 0) {
-                            queue.put(Optional.of(new Student(name, email, generatePass())));
+                            && email != null && (email = email.trim()).length() > 0
+                            && year != null && (year = year.trim()).length() > 0
+                            && sign != null && (sign = sign.trim()).length() == 1) {
+                            queue.put(Optional.of(new Student(name, email, Class.of(Integer.parseInt(year), sign), generatePass())));
                         }
                     }
                 }
@@ -107,7 +112,11 @@ public class StudentRepo implements Repo<Student> {
 
                 preparedStatement.setString(1, s.getName());
                 preparedStatement.setString(2, s.getEmail());
-                preparedStatement.setString(3, s.getCode());
+
+                preparedStatement.setShort(3, s.getaClass().year.value);
+                preparedStatement.setString(4, s.getaClass().sign.name());
+
+                preparedStatement.setString(5, s.getCode());
                 preparedStatement.addBatch();
             }
 
@@ -129,11 +138,13 @@ public class StudentRepo implements Repo<Student> {
         return false;
     }
 
-    public boolean saveStudent(String name, String email) {
+    public boolean saveStudent(String name, String email, Class aClass) {
         return runUpdate(INSERT_NEW_SQL, ps -> {
             ps.setString(1, name);
             ps.setString(2, email);
-            ps.setString(3, generatePass());
+            ps.setShort(3, aClass.year.value);
+            ps.setString(4, aClass.sign.name());
+            ps.setString(5, generatePass());
         });
     }
 
@@ -144,7 +155,7 @@ public class StudentRepo implements Repo<Student> {
 
     @Override
     public Student fromSingleRow(ResultSet resultSet) throws SQLException {
-        return new Student(resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3), resultSet.getString(4));
+        return new Student(resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3), Class.of(resultSet.getShort(4), resultSet.getString(5)), resultSet.getString(6));
     }
 
 }
