@@ -50,7 +50,9 @@ public class EventHandler {
         Collection<Student> students;
         try {
             event = eventRepo.getEventById(Integer.parseInt(request.params(":eid"))).get();
-            tf = timeframeRepo.getTimeframeById(event.getTimeFrameId()).get();
+            //TODO
+            //tf = timeframeRepo.getTimeframeById(event.getTimeFrameId()).get();
+            tf = timeframeRepo.getTimeframeById(1).get();
             students = studentRepo.getEventSignups(event.getId());
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
@@ -84,9 +86,13 @@ public class EventHandler {
         try {
             String name = request.queryParams("name");
             int max = Integer.parseInt(request.queryParams("max"));
-            int tfId = Integer.parseInt(request.queryParams("tf"));
 
-            if (!eventRepo.saveEvent(name, max, tfId)) {
+            List<Integer> tfs = timeframeRepo.getAll().stream()
+                                    .filter(tf -> "true".equals(request.queryParams("tf" + tf.getId())))
+                                    .map(TimeFrame::getId)
+                                    .collect(Collectors.toList());
+
+            if (!eventRepo.saveEvent(name, max, tfs)) {
                 request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
             }
         } catch (NumberFormatException nfe) {
@@ -162,15 +168,8 @@ public class EventHandler {
 
     private String listEvents(Request request, Response response) {
         Map<String, Object> model = newModel(request);
-        Collection<TimeFrame> timeframes = timeframeRepo.getAll();
-        List<Pair<TimeFrame, Pair<Event, Integer>>> table = new ArrayList<>(40);
-        for (TimeFrame tf : timeframes) {
-            table.addAll(eventRepo.getEventsAndSignupsByTf(tf).stream().map(p -> new Pair<>(tf, p)).collect(Collectors.toList()));
-        }
-
-        model.put("timeframes", timeframes);
-        model.put("table", table);
-
+        model.put("timeframes", timeframeRepo.getAll());
+        model.put("table", eventRepo.getEventsAndSignups());
         return render(model, "admin-events.vts");
     }
 

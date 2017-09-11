@@ -26,11 +26,9 @@
             <form action="/admin/events" method="POST">
                 <tr>
                     <td style="text-align: center">
-                        <select name="tf">
-                            #foreach( $tf in $timeframes )
-                                <option value="$tf.id">$tf.start - $tf.end</option>
-                            #end
-                        </select>
+                        #foreach( $tf in $timeframes )
+                            <input type="checkbox" name="tf$tf.id" value="true">$tf.start - $tf.end<br>
+                        #end
                     </td>
                     <td> <input type="text" name="name"> </td>
                     <td>  </td>
@@ -39,12 +37,16 @@
                 </tr>
             </form>
             #foreach( $pair in $table )
-                #set( $tf = $pair.key )
-                #set( $eventPair = $pair.value )
+                #set( $eventPair = $pair.key )
                 #set( $event = $eventPair.key )
                 #set( $taken = $eventPair.value )
+                #set( $eventTFs = $pair.value )
                 <tr>
-                    <td> $tf.start - $tf.end</td>
+                    <td>
+                        #foreach( $tf in $eventTFs )
+                            $tf.start - $tf.end<br>
+                        #end
+                    </td>
                     <td> $event.name </td>
                     <td> $taken </td>
                     <td> $event.maxStudents </td>

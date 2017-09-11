@@ -33,10 +33,11 @@ public class StudentRepo implements Repo<Student> {
                                                      "FROM STUDENT, SIGNUP " +
                                                      "WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
 
-    private static final String SELECT_BY_CLASS_WITH_TF_NUMBER = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY, SUM(CASE WHEN TIMEFRAME.ID IS NULL THEN 0 ELSE 1 END) " +
-                                                                 "FROM STUDENT LEFT JOIN SIGNUP ON STUDENT.ID = SIGNUP.STUDENT_ID " +
+    private static final String SELECT_BY_CLASS_WITH_TF_NUMBER = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY, SUM(CASE WHEN EVENT_TIMEFRAMES.TIMEFRAME_ID IS NULL THEN 0 ELSE 1 END) " +
+                                                                 "FROM STUDENT " +
+                                                                 "LEFT JOIN SIGNUP ON STUDENT.ID = SIGNUP.STUDENT_ID " +
                                                                  "LEFT JOIN EVENT ON SIGNUP.EVENT_ID = EVENT.ID " +
-                                                                 "LEFT JOIN TIMEFRAME ON EVENT.TIMEFRAME_ID = TIMEFRAME.ID " +
+                                                                 "LEFT JOIN EVENT_TIMEFRAMES ON EVENT.ID = EVENT_TIMEFRAMES.EVENT_ID " +
                                                                  "WHERE STUDENT.CLASS_YEAR = ? AND STUDENT.SIGN = ? " +
                                                                  "GROUP BY STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY " +
                                                                  "ORDER BY STUDENT.NAME";
