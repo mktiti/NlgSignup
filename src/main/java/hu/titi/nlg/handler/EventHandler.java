@@ -20,6 +20,7 @@ public class EventHandler {
     public EventHandler() {
         get("/admin/events", this::listEvents);
         post("/admin/events", this::saveEvent);
+        get("/admin/events/:eid", this::getReport);
         get("/admin/events/:eid/report.csv", this::getReportFile);
         get("/admin/events/report.csv", this::getCompleteReportFile);
         get("/admin/events/delete/:eid", this::deleteEvent);
@@ -30,15 +31,12 @@ public class EventHandler {
     }
 
     private String getCompleteReportFile(Request request, Response response) {
-        Collection<TimeFrame> timeFrames = timeframeRepo.getAll();
         StringBuilder sb = new StringBuilder();
         response.type("application/force-download");
-        for (TimeFrame tf : timeFrames) {
-            Collection<Event> events = eventRepo.getEventsByTimeframe(tf);
-            for (Event event : events) {
-                appendEvent(sb, tf, event, studentRepo.getEventSignups(event.getId()));
-                sb.append("\n\n");
-            }
+
+        for (Event event : eventRepo.getAll()) {
+            appendEvent(sb, timeframeRepo.getTimeframesOfEvent(event.getId()), event, studentRepo.getEventSignups(event.getId()));
+            sb.append("\n\n");
         }
 
         return sb.toString();
@@ -46,13 +44,11 @@ public class EventHandler {
 
     private String getReportFile(Request request, Response response) {
         Event event;
-        TimeFrame tf;
+        Collection<TimeFrame> tfs;
         Collection<Student> students;
         try {
             event = eventRepo.getEventById(Integer.parseInt(request.params(":eid"))).get();
-            //TODO
-            //tf = timeframeRepo.getTimeframeById(event.getTimeFrameId()).get();
-            tf = timeframeRepo.getTimeframeById(1).get();
+            tfs = timeframeRepo.getTimeframesOfEvent(event.getId());
             students = studentRepo.getEventSignups(event.getId());
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");
@@ -69,16 +65,22 @@ public class EventHandler {
 
         response.type("application/force-download");
         StringBuilder sb = new StringBuilder();
-        appendEvent(sb, tf, event, students);
+        appendEvent(sb, tfs, event, students);
         return sb.toString();
     }
 
-    private static void appendEvent(StringBuilder sb, TimeFrame tf, Event event, Collection<Student> students) {
-        sb.append(event.getName()).append(SEPARATOR).append(tf.getStart()).append(" - ").append(tf.getEnd()).append(SEPARATOR).append("\n\nNév").append(SEPARATOR)
-                .append("E-mail").append(SEPARATOR).append('\n');
+    private static void appendEvent(StringBuilder sb, Collection<TimeFrame> tfs, Event event, Collection<Student> students) {
+        sb.append(event.getName()).append(SEPARATOR);
+        for (TimeFrame tf : tfs) {
+            sb.append("[").append(tf.getStart()).append("-").append(tf.getEnd()).append("]");
+        }
+        sb.append(SEPARATOR)
+          .append("\n\nNév").append(SEPARATOR)
+          .append("E-mail").append(SEPARATOR)
+          .append("Osztály").append(SEPARATOR).append('\n');
 
         for (Student s : students) {
-            sb.append(s.getName()).append(SEPARATOR).append(s.getEmail()).append(SEPARATOR).append('\n');
+            sb.append(s.getName()).append(SEPARATOR).append(s.getEmail()).append(SEPARATOR).append(s.getaClass()).append(SEPARATOR).append('\n');
         }
     }
 
@@ -145,6 +147,7 @@ public class EventHandler {
             Optional<TimeFrame> otf = timeframeRepo.getTimeframeById(Integer.parseInt(sTFID));
             if (!otf.isPresent()) {
                 response.redirect("/student");
+                return "";
             }
 
             TimeFrame tf = otf.get();
@@ -171,6 +174,26 @@ public class EventHandler {
         model.put("timeframes", timeframeRepo.getAll());
         model.put("table", eventRepo.getEventsAndSignups());
         return render(model, "admin-events.vts");
+    }
+
+    private String getReport(Request request, Response response) {
+        try {
+            Optional<Event> opt = eventRepo.getEventById(Integer.parseInt(request.params(":eid")));
+            if (opt.isPresent()) {
+                Map<String, Object> model = newModel(request);
+                model.put("event", opt.get());
+                model.put("students", studentRepo.getEventSignups(opt.get().getId()));
+                return render(model, "admin-event-report.vts");
+            } else {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, "nem létező esemény"));
+            }
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception");
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.REPORT, "hibás azonosító"));
+        }
+
+        response.redirect("/admin/events");
+        return "";
     }
 
 }

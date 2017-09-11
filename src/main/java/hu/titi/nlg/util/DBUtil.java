@@ -2,6 +2,7 @@ package hu.titi.nlg.util;
 
 import hu.titi.nlg.repo.TextManager;
 
+import java.io.IOException;
 import java.sql.*;
 
 public class DBUtil {
@@ -63,7 +64,15 @@ public class DBUtil {
             close(conn);
         }
     }
-
+/*
+    public static void main(String[] args) {
+        try {
+            org.apache.derby.tools.ij.main(new String[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+*/
     static void init() {
         // Force static initializer to run
     }

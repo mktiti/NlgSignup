@@ -27,6 +27,8 @@ public class TimeframeHandler {
         try {
             if (!timeframeRepo.deleteTimeframe(Integer.parseInt(id))) {
                 request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.DELETE, null));
+            } else {
+                eventRepo.deleteUnassignedEvents();
             }
         } catch (NumberFormatException nfe) {
             System.out.println("Number format exception");

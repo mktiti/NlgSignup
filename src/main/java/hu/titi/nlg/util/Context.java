@@ -65,14 +65,6 @@ public class Context {
         new DeleteHandler();
 
         redirect.get("/", "/login");
-        //get("/shutdown", (req, res) -> {stop(); return "Shutting down";});
-        /*
-        try {
-            org.apache.derby.tools.ij.main(new String[0]);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
     }
 
     public static String render(Map<String, Object> model, String templatePath) {

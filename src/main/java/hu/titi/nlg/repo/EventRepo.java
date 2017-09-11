@@ -26,6 +26,12 @@ public class EventRepo implements Repo<Event> {
                                                               "WHERE STUDENT.ID = SIGNUP.STUDENT_ID AND EVENT.ID = SIGNUP.EVENT_ID AND STUDENT.ID = ? " +
                                                                     "AND EVENT.ID = EVENT_TIMEFRAMES.EVENT_ID AND EVENT_TIMEFRAMES.TIMEFRAME_ID = ?";
 
+    private static final String SELECT_UNASSIGNED = "SELECT ID, NAME, MAX_SIGNUPS " +
+                                                    "FROM EVENT " +
+                                                    "WHERE NOT EXISTS (" +
+                                                        "SELECT 1 FROM EVENT_TIMEFRAMES WHERE EVENT_TIMEFRAMES.EVENT_ID = EVENT.ID" +
+                                                    ")";
+
     private static final String SELECT_WITH_AVAILABLE_BY_TIMEFRAME = "SELECT ID, NAME, TIMEFRAME_ID, EVENT.MAX_SIGNUPS, SIGNUPS " +
                                                                      "FROM EVENT_SIGNUPS, EVENT, EVENT_TIMEFRAMES " +
                                                                      "WHERE EVENT_SIGNUPS.EVENT_ID = EVENT.ID AND EVENT.ID = EVENT_TIMEFRAMES.EVENT_ID AND EVENT_TIMEFRAMES.TIMEFRAME_ID = ? " +
@@ -45,7 +51,7 @@ public class EventRepo implements Repo<Event> {
     private static final String SELECT_ALL_WITH_SIGNUPS_TIMEFRAMES = "SELECT EVENT.ID, EVENT.NAME, EVENT.MAX_SIGNUPS, TIMEFRAME.ID, TIMEFRAME.START_TIME, TIMEFRAME.END_TIME, SIGNUPS " +
                                                                      "FROM EVENT_SIGNUPS, EVENT, EVENT_TIMEFRAMES, TIMEFRAME " +
                                                                      "WHERE EVENT_SIGNUPS.EVENT_ID = EVENT.ID AND EVENT.ID = EVENT_TIMEFRAMES.EVENT_ID AND EVENT_TIMEFRAMES.TIMEFRAME_ID = TIMEFRAME.ID " +
-                                                                     "ORDER BY TIMEFRAME.START_TIME";
+                                                                     "ORDER BY TIMEFRAME.START_TIME, EVENT.NAME";
 
     /*
     private static final String INSERT_DUMMY = "INSERT INTO SIGNUP VALUES (?, 0)";
@@ -108,7 +114,7 @@ public class EventRepo implements Repo<Event> {
         return null;
     }
 
-    public Collection<Pair<Pair<Event, Integer>, Collection<TimeFrame>>> getEventsAndSignups() {
+    public Collection<Triple<Event, Integer, List<TimeFrame>>> getEventsAndSignups() {
         Connection conn = DBUtil.getConnection();
         if (conn == null) {
             return null;
@@ -120,25 +126,23 @@ public class EventRepo implements Repo<Event> {
             preparedStatement = conn.prepareStatement(SELECT_ALL_WITH_SIGNUPS_TIMEFRAMES);
 
             resultSet = preparedStatement.executeQuery();
-            Map<Event, Pair<Collection<TimeFrame>, Integer>> map = new HashMap<>();
+            LinkedList<Triple<Event, Integer, List<TimeFrame>>> list = new LinkedList<>();
             while (resultSet.next()) {
                 Event event = fromSingleRow(resultSet);
                 TimeFrame tf = new TimeFrame(resultSet.getInt(4), resultSet.getTime(5).toLocalTime(), resultSet.getTime(6).toLocalTime());
                 int signups = resultSet.getInt(7);
 
-                Pair<Collection<TimeFrame>, Integer> pair = map.get(event);
-                if (pair == null) {
-                    ArrayList<TimeFrame> tfs = new ArrayList<>(6);
-                    tfs.add(tf);
-                    map.put(event, new Pair<>(tfs, signups));
+                Optional<Triple<Event, Integer, List<TimeFrame>>> opt = list.stream().filter(t -> t.getFirst().getId() == event.getId()).findAny();
+                if (opt.isPresent()) {
+                    opt.get().getThird().add(tf);
                 } else {
-                    pair.getKey().add(tf);
+                    List<TimeFrame> timeframes = new LinkedList<>();
+                    timeframes.add(tf);
+                    list.add(new Triple<>(event, signups, timeframes));
                 }
             }
+            return list;
 
-            return map.entrySet().stream()
-                    .map(e -> new Pair<>(new Pair<>(e.getKey(), e.getValue().getValue()), e.getValue().getKey()))
-                    .collect(Collectors.toList());
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -346,10 +350,15 @@ public class EventRepo implements Repo<Event> {
     }
 
     public boolean deleteEvent(int id) {
+        System.out.println("Deleting event [" + id + "]");
         boolean deleted = runUpdate(DELETE_SQL, ps -> ps.setInt(1, id));
         if (deleted) {
             eventDeleted(id);
         }
         return deleted;
+    }
+
+    public void deleteUnassignedEvents() {
+        getMultipleFromSQL(SELECT_UNASSIGNED, ps -> {}).forEach(event -> deleteEvent(event.getId()));
     }
 }

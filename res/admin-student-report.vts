@@ -36,7 +36,7 @@
 
                     <td>
                         #if ( $optE.isPresent() )
-                            $optE.get().name
+                            <a href="/admin/events/$optE.get().id">$optE.get().name</a>
                         #else
                             <i>Még nem jelentkezett</i>
                         #end

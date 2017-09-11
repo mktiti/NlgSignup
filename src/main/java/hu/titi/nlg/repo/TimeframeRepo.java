@@ -5,6 +5,7 @@ import hu.titi.nlg.util.DBUtil;
 
 import java.sql.*;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.Optional;
 
 public class TimeframeRepo implements Repo<TimeFrame> {
@@ -15,6 +16,9 @@ public class TimeframeRepo implements Repo<TimeFrame> {
     private static final String DELETE_SQL = "DELETE FROM TIMEFRAME WHERE ID = ?";
     private static final String UPDATE_SQL = "UPDATE TIMEFRAME SET START_TIME = ?, END_TIME = ? WHERE ID = ?";
     private static final String GET_NUMBER_SQL = "SELECT COUNT(ID) FROM TIMEFRAME";
+    private static final String GET_TIMEFRAMES_OF_EVENT = "SELECT TIMEFRAME.ID, TIMEFRAME.START_TIME, TIMEFRAME.END_TIME " +
+                                                          "FROM EVENT_TIMEFRAMES, TIMEFRAME " +
+                                                          "WHERE EVENT_TIMEFRAMES.EVENT_ID = ? AND EVENT_TIMEFRAMES.TIMEFRAME_ID = TIMEFRAME.ID";
 
     public Optional<TimeFrame> getTimeframeById(int id) {
         return getSingleFromSQL(SELECT_BY_ID_SQL, ps -> ps.setInt(1, id));
@@ -65,6 +69,10 @@ public class TimeframeRepo implements Repo<TimeFrame> {
         }
 
         return 0;
+    }
+
+    public Collection<TimeFrame> getTimeframesOfEvent(int eventId) {
+        return getMultipleFromSQL(GET_TIMEFRAMES_OF_EVENT, ps -> ps.setInt(1, eventId));
     }
 
     @Override

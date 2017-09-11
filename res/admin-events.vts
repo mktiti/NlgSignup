@@ -36,18 +36,17 @@
                     <td colspan="2" style="text-align: left"> <input type="submit" value="Hozzáadás"> </td>
                 </tr>
             </form>
-            #foreach( $pair in $table )
-                #set( $eventPair = $pair.key )
-                #set( $event = $eventPair.key )
-                #set( $taken = $eventPair.value )
-                #set( $eventTFs = $pair.value )
+            #foreach( $triple in $table )
+                #set( $event = $triple.first )
+                #set( $taken = $triple.second )
+                #set( $eventTFs = $triple.third )
                 <tr>
                     <td>
                         #foreach( $tf in $eventTFs )
                             $tf.start - $tf.end<br>
                         #end
                     </td>
-                    <td> $event.name </td>
+                    <td><a href="/admin/events/$event.id">$event.name</a></td>
                     <td> $taken </td>
                     <td> $event.maxStudents </td>
                     <td> <a class="abtn" href="/admin/delete/events/delete/$event.id">Törlés</a> </td>
