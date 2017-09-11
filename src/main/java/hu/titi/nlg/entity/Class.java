@@ -43,7 +43,17 @@ public final class Class implements Comparable<Class> {
     public final Year year;
     public final Sign sign;
 
-    public Class(Year year, Sign sign) {
+    private static final Class[][] classes = new Class[4][4];
+
+    static {
+        for (int y = 0; y < Year.values().length; y++) {
+            for (int s = 0; s < Sign.values().length; s++) {
+                classes[y][s] = new Class(Year.values()[y], Sign.values()[s]);
+            }
+        }
+    }
+
+    private Class(Year year, Sign sign) {
         this.year = year;
         this.sign = sign;
     }
@@ -53,8 +63,11 @@ public final class Class implements Comparable<Class> {
     }
 
     private static Class of(int year, char sign) {
-        Class c = new Class(Year.of(year), Sign.of(sign));
-        return (c.year == null || c.sign == null) ? null : c;
+        if (year >= 9 && year <= 12 && sign >= 'A' && sign <= 'D') {
+            return classes[year - 9][sign - 'A'];
+        }
+
+        return null;
     }
 
     public Year getYear() {

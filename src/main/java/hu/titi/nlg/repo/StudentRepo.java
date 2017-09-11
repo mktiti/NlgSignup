@@ -27,10 +27,19 @@ public class StudentRepo implements Repo<Student> {
     private static final String DELETE_ALL_SQL = "DELETE FROM STUDENT WHERE ID <> 0";
     private static final String SELECT_BY_ID_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND ID = ?";
     private static final String SELECT_BY_EMAIL_SQL = "SELECT * FROM STUDENT WHERE ID <> 0 AND EMAIL = ?";
-    private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY FROM STUDENT, SIGNUP WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
     private static final String SELECT_BY_CLASS = "SELECT * FROM STUDENT WHERE ID <> 0 AND CLASS_YEAR = ? AND SIGN = ?";
 
-    private static final String SELECT_BY_CLASS_WITH_TF_NUMBER = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY, COUNT(TIMEFRAME.ID) FROM STUDENT, SIGNUP, EVENT, TIMEFRAME WHERE STUDENT.CLASS_YEAR = ? AND STUDENT.SIGN = ? AND STUDENT.ID = SIGNUP.STUDENT_ID AND SIGNUP.EVENT_ID = EVENT.ID AND EVENT.TIMEFRAME_ID = TIMEFRAME.ID GROUP BY STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY";
+    private static final String SELECT_BY_EVENT_ID = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY " +
+                                                     "FROM STUDENT, SIGNUP " +
+                                                     "WHERE STUDENT.ID <> 0 AND SIGNUP.STUDENT_ID = STUDENT.ID AND SIGNUP.EVENT_ID = ?";
+
+    private static final String SELECT_BY_CLASS_WITH_TF_NUMBER = "SELECT STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY, SUM(CASE WHEN TIMEFRAME.ID IS NULL THEN 0 ELSE 1 END) " +
+                                                                 "FROM STUDENT LEFT JOIN SIGNUP ON STUDENT.ID = SIGNUP.STUDENT_ID " +
+                                                                 "LEFT JOIN EVENT ON SIGNUP.EVENT_ID = EVENT.ID " +
+                                                                 "LEFT JOIN TIMEFRAME ON EVENT.TIMEFRAME_ID = TIMEFRAME.ID " +
+                                                                 "WHERE STUDENT.CLASS_YEAR = ? AND STUDENT.SIGN = ? " +
+                                                                 "GROUP BY STUDENT.ID, STUDENT.NAME, STUDENT.EMAIL, STUDENT.CLASS_YEAR, STUDENT.SIGN, STUDENT.PASSKEY " +
+                                                                 "ORDER BY STUDENT.NAME";
 
     private static final String INSERT_NEW_SQL = "INSERT INTO STUDENT (NAME, EMAIL, CLASS_YEAR, SIGN, PASSKEY) VALUES (?, ?, ?, ?, ?)";
 
