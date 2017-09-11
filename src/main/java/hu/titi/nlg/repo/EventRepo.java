@@ -32,7 +32,7 @@ public class EventRepo implements Repo<Event> {
                                                         "SELECT 1 FROM EVENT_TIMEFRAMES WHERE EVENT_TIMEFRAMES.EVENT_ID = EVENT.ID" +
                                                     ")";
 
-    private static final String SELECT_WITH_AVAILABLE_BY_TIMEFRAME = "SELECT ID, NAME, TIMEFRAME_ID, EVENT.MAX_SIGNUPS, SIGNUPS " +
+    private static final String SELECT_WITH_AVAILABLE_BY_TIMEFRAME = "SELECT ID, NAME, EVENT.MAX_SIGNUPS, SIGNUPS " +
                                                                      "FROM EVENT_SIGNUPS, EVENT, EVENT_TIMEFRAMES " +
                                                                      "WHERE EVENT_SIGNUPS.EVENT_ID = EVENT.ID AND EVENT.ID = EVENT_TIMEFRAMES.EVENT_ID AND EVENT_TIMEFRAMES.TIMEFRAME_ID = ? " +
                                                                      "ORDER BY NAME";
@@ -99,7 +99,7 @@ public class EventRepo implements Repo<Event> {
             resultSet = preparedStatement.executeQuery();
             Collection<Pair<Event, Integer>> ret = new ArrayList<>(resultSet.getFetchSize());
             while (resultSet.next()) {
-                ret.add(new Pair<>(fromSingleRow(resultSet), resultSet.getInt(5)));
+                ret.add(new Pair<>(fromSingleRow(resultSet), resultSet.getInt(4)));
             }
 
             return ret;
