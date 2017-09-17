@@ -21,6 +21,7 @@
                 <th>Név</th>
                 <th>Jelentkezettek</th>
                 <th>Max létszám</th>
+                <th>Tiltólista</th>
                 <th colspan="2"> <a class="abtn" href="/admin/events/report.csv">Összesített CSV Kivonat</a> </th>
             </tr>
             <form action="/admin/events" method="POST">
@@ -33,13 +34,15 @@
                     <td><input type="text" name="name" style="display:table-cell; width:100%"></td>
                     <td></td>
                     <td><input type="number" min="1" name="max"></td>
+                    <td><input type="text" name="blacklist" style="display:table-cell; width:100%" placeholder="pl: 9A, 10B, 12*, 11D"></td>
                     <td colspan="2" style="text-align: left"> <input type="submit" value="Hozzáadás"> </td>
                 </tr>
             </form>
-            #foreach( $triple in $table )
-                #set( $event = $triple.first )
-                #set( $taken = $triple.second )
-                #set( $eventTFs = $triple.third )
+            #foreach( $item in $table )
+                #set( $event = $item.event )
+                #set( $taken = $item.signups )
+                #set( $eventTFs = $item.timeframes )
+                #set( $blacklist = $item.getBlacklistString() )
                 <tr>
                     <td>
                         #foreach( $tf in $eventTFs )
@@ -49,6 +52,7 @@
                     <td><a href="/admin/events/$event.id">$event.name</a></td>
                     <td> $taken </td>
                     <td> $event.maxStudents </td>
+                    <td> $blacklist </td>
                     <td> <a class="abtn" href="/admin/delete/events/delete/$event.id">Törlés</a> </td>
                     <td> <a class="abtn" href="/admin/events/$event.id/report.csv">CSV Kivonat</a> </td>
                 </tr>

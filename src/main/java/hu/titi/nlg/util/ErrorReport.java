@@ -4,7 +4,7 @@ public class ErrorReport {
 
     public enum ErrorType {
         LOGIN("Hibás felhasználónév vagy jelszó"),
-        SIGNUP("A bejelentkezés nem sikerült"),
+        SIGNUP("A jelentkezés nem sikerült"),
         ADD("A hozzáadás nem sikerült"),
         REPORT("Hiba lépett fel a jelentés elkészítése közben"),
         DELETE("Hiba lépett fel a törlés közben"),

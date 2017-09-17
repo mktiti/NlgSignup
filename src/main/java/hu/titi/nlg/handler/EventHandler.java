@@ -1,9 +1,7 @@
 package hu.titi.nlg.handler;
 
-import hu.titi.nlg.entity.Event;
-import hu.titi.nlg.entity.Pair;
-import hu.titi.nlg.entity.Student;
-import hu.titi.nlg.entity.TimeFrame;
+import hu.titi.nlg.entity.*;
+import hu.titi.nlg.entity.Class;
 import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
@@ -14,6 +12,7 @@ import java.util.stream.Collectors;
 import static hu.titi.nlg.util.Context.*;
 import static spark.Spark.get;
 import static spark.Spark.post;
+import static spark.Spark.redirect;
 
 public class EventHandler {
 
@@ -84,17 +83,75 @@ public class EventHandler {
         }
     }
 
+    private static Set<hu.titi.nlg.entity.Class> parseBlacklist(String s) {
+        if (s == null || (s = s.trim()).length() == 0) {
+            return Collections.emptySet();
+        }
+
+        Set<Class> ret = new HashSet<>();
+
+        try {
+            for (String name : s.split(",")) {
+                name = name.trim().replaceAll("\\.", "");
+                if (name.length() == 1 && name.charAt(0) == '9') {
+                    name += '*';
+                }
+
+                if (name.length() != 2 && name.length() != 3) {
+                    return null;
+                }
+
+                String yearString = name.substring(0, name.length() - 1);
+                char signChar = name.charAt(name.length() - 1);
+
+                int year = Integer.parseInt(yearString);
+
+                if (signChar == '*') {
+                    Collection<Class> classes = Class.getAllFromYear(year);
+                    if (classes == null) {
+                        System.out.println("Null classes while parsing blacklisted classes, reporting error");
+                        return null;
+                    }
+                    ret.addAll(classes);
+                } else {
+                    Class c = Class.of(year, signChar);
+                    if (c == null) {
+                        System.out.println("Null class while parsing blacklisted classes, reporting error");
+                        return null;
+                    }
+                    ret.add(Class.of(year, signChar));
+                }
+
+            }
+
+            return ret;
+        } catch (NumberFormatException nfe) {
+            System.out.println("Number format exception while parsing blacklisted classes, reporting error");
+        } catch (NullPointerException npe) {
+            System.out.println("Null pointer exception while parsing blacklisted classes, reporting error");
+        }
+
+        return null;
+    }
+
     private String saveEvent(Request request, Response response) {
         try {
             String name = request.queryParams("name");
+            Set<Class> blacklist = parseBlacklist(request.queryParams("blacklist"));
             int max = Integer.parseInt(request.queryParams("max"));
+
+            if (blacklist == null) {
+                request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, "hibás tiltólista"));
+                response.redirect("/admin/events");
+                return null;
+            }
 
             List<Integer> tfs = timeframeRepo.getAll().stream()
                                     .filter(tf -> "true".equals(request.queryParams("tf" + tf.getId())))
                                     .map(TimeFrame::getId)
                                     .collect(Collectors.toList());
 
-            if (!eventRepo.saveEvent(name, max, tfs)) {
+            if (!eventRepo.saveEvent(name, max, tfs, blacklist)) {
                 request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.ADD, null));
             }
         } catch (NumberFormatException nfe) {
@@ -151,12 +208,19 @@ public class EventHandler {
             }
 
             TimeFrame tf = otf.get();
+            Optional<Student> studentOpt = studentRepo.getStudentById(request.session().attribute("studentID"));
+            if (!studentOpt.isPresent()) {
+                response.redirect("/logout");
+                return "";
+            }
+            
             Optional<Event> signedUp = eventRepo.getEventSignups(request.session().attribute("studentID"), tf.getId());
             if (otf.isPresent()) {
                 Map<String, Object> model = newModel(request);
                 model.put("tf", tf);
                 model.put("events", eventRepo.getEventsAndSignupsByTf(tf));
                 model.put("signedUp", signedUp);
+                model.put("class", studentOpt.get().getaClass());
 
                 return render(model, "student-signup.vts");
             }

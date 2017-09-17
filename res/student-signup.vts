@@ -9,6 +9,9 @@
             .signed {
                 background-color: #78BF7A;
             }
+            .nosignup {
+                background-color: #F75B5B;
+            }
         </style>
     </head>
     <body>
@@ -24,18 +27,23 @@
             </tr>
 
             #if ( $events.size() > 0 )
-                #foreach( $eventPair in $events )
-                    #set ( $event = $eventPair.key )
-                    #set ( $available = $event.maxStudents - $eventPair.value )
+                #foreach( $triple in $events )
+                    #set ( $event = $triple.first )
+                    #set ( $available = $event.maxStudents - $triple.second )
                     #set ( $signed = $signedUp.isPresent() && $signedUp.get().id == $event.id )
+                    #set ( $blacklisted = $triple.third.contains($class) )
                     #if ( $signed )
                         <tr class="signed">
+                    #elseif ( $blacklisted )
+                        <tr class="nosignup">
                     #else
                         <tr>
                     #end
                         <td> $event.name </td>
                         <td>
-                            #if( $available > 0 )
+                            #if ( $blacklisted )
+                                <i>Más osztályoknak fenntartva</i>
+                            #elseif ( $available > 0 )
                                 $available
                             #else
                                 <i>Betelt</i>
@@ -44,6 +52,7 @@
                         <td>
                             #if ( $signed )
                                 <i>Jelentkezve</i>
+                            #elseif ( $blacklisted )
                             #elseif ( $available > 0 )
                                 <a class="abtn" href="/student/events/signup/$event.id">Jelentkezés</a>
                             #end

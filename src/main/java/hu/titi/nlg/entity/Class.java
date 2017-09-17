@@ -1,5 +1,10 @@
 package hu.titi.nlg.entity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 public final class Class implements Comparable<Class> {
 
     public enum Year {
@@ -62,9 +67,21 @@ public final class Class implements Comparable<Class> {
         return (sign.length() == 1) ? of(year, sign.charAt(0)) : null;
     }
 
-    private static Class of(int year, char sign) {
+    public static Class of(int year, char sign) {
+        if (sign >= 'a' && sign <= 'd') {
+            sign = (char)('A' + (sign - 'a'));
+        }
+
         if (year >= 9 && year <= 12 && sign >= 'A' && sign <= 'D') {
             return classes[year - 9][sign - 'A'];
+        }
+
+        return null;
+    }
+
+    public static Collection<Class> getAllFromYear(int year) {
+        if (year >= 9 && year <= 12) {
+            return Arrays.asList(classes[year - 9]);
         }
 
         return null;

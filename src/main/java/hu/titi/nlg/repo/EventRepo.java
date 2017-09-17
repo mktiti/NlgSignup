@@ -1,10 +1,9 @@
 package hu.titi.nlg.repo;
 
-import hu.titi.nlg.entity.Event;
-import hu.titi.nlg.entity.Pair;
-import hu.titi.nlg.entity.TimeFrame;
-import hu.titi.nlg.entity.Triple;
+import hu.titi.nlg.entity.*;
+import hu.titi.nlg.entity.Class;
 import hu.titi.nlg.util.DBUtil;
+import hu.titi.nlg.util.EventReportItem;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,6 +38,13 @@ public class EventRepo implements Repo<Event> {
 
     private static final String INSERT_NEW = "INSERT INTO EVENT (NAME, MAX_SIGNUPS) VALUES(?, ?)";
     private static final String SET_TIMEFRAMES = "INSERT INTO EVENT_TIMEFRAMES VALUES(?, ?)";
+    private static final String SET_BLACKLIST = "INSERT INTO BLACKLIST VALUES(?, ?, ?)";
+
+    private static final String CHECK_BLACKLIST = "SELECT 'blacklisted' FROM STUDENT, BLACKLIST " +
+                                                  "WHERE STUDENT.ID = ? AND BLACKLIST.EVENT_ID = ? AND " +
+                                                  "STUDENT.CLASS_YEAR = BLACKLIST.CLASS_YEAR AND STUDENT.SIGN = BLACKLIST.SIGN";
+
+    private static final String GET_BLACKLIST = "SELECT CLASS_YEAR, SIGN FROM BLACKLIST WHERE EVENT_ID = ? ORDER BY CLASS_YEAR, SIGN";
 
     private static final String DELETE_EXISTING_SIGNUP = "DELETE FROM SIGNUP " +
                                                          "WHERE STUDENT_ID = ? AND EVENT_ID IN " +
@@ -83,7 +89,7 @@ public class EventRepo implements Repo<Event> {
         return getSingleFromSQL(SELECT_BY_USER_BY_TIMEFRAME, ps -> {ps.setInt(1, studentID); ps.setInt(2, timeFrameID);});
     }
 
-    public Collection<Pair<Event, Integer>> getEventsAndSignupsByTf(TimeFrame tf) {
+    public Collection<Triple<Event, Integer, Collection<Class>>> getEventsAndSignupsByTf(TimeFrame tf) {
         Connection conn = DBUtil.getConnection();
         if (conn == null) {
             return null;
@@ -97,9 +103,10 @@ public class EventRepo implements Repo<Event> {
             preparedStatement.setInt(1, tf.getId());
 
             resultSet = preparedStatement.executeQuery();
-            Collection<Pair<Event, Integer>> ret = new ArrayList<>(resultSet.getFetchSize());
+            Collection<Triple<Event, Integer, Collection<Class>>> ret = new ArrayList<>(resultSet.getFetchSize());
             while (resultSet.next()) {
-                ret.add(new Pair<>(fromSingleRow(resultSet), resultSet.getInt(4)));
+                Event event = fromSingleRow(resultSet);
+                ret.add(new Triple<>(event, resultSet.getInt(4), getBlacklist(event.getId())));
             }
 
             return ret;
@@ -114,7 +121,36 @@ public class EventRepo implements Repo<Event> {
         return null;
     }
 
-    public Collection<Triple<Event, Integer, List<TimeFrame>>> getEventsAndSignups() {
+    public Collection<Class> getBlacklist(int eventID) {
+        Connection conn = DBUtil.getConnection();
+        if (conn == null) {
+            return null;
+        }
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            preparedStatement = conn.prepareStatement(GET_BLACKLIST);
+            preparedStatement.setInt(1, eventID);
+            resultSet = preparedStatement.executeQuery();
+            LinkedList<Class> list = new LinkedList<>();
+            while (resultSet.next()) {
+                list.add(Class.of(resultSet.getShort(1), resultSet.getString(2)));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(resultSet);
+            close(preparedStatement);
+            close(conn);
+        }
+
+        return null;
+    }
+
+    public Collection<EventReportItem> getEventsAndSignups() {
         Connection conn = DBUtil.getConnection();
         if (conn == null) {
             return null;
@@ -126,19 +162,19 @@ public class EventRepo implements Repo<Event> {
             preparedStatement = conn.prepareStatement(SELECT_ALL_WITH_SIGNUPS_TIMEFRAMES);
 
             resultSet = preparedStatement.executeQuery();
-            LinkedList<Triple<Event, Integer, List<TimeFrame>>> list = new LinkedList<>();
+            LinkedList<EventReportItem> list = new LinkedList<>();
             while (resultSet.next()) {
                 Event event = fromSingleRow(resultSet);
                 TimeFrame tf = new TimeFrame(resultSet.getInt(4), resultSet.getTime(5).toLocalTime(), resultSet.getTime(6).toLocalTime());
                 int signups = resultSet.getInt(7);
 
-                Optional<Triple<Event, Integer, List<TimeFrame>>> opt = list.stream().filter(t -> t.getFirst().getId() == event.getId()).findAny();
+                Optional<EventReportItem> opt = list.stream().filter(t -> t.getEvent().getId() == event.getId()).findAny();
                 if (opt.isPresent()) {
-                    opt.get().getThird().add(tf);
+                    opt.get().getTimeframes().add(tf);
                 } else {
                     List<TimeFrame> timeframes = new LinkedList<>();
                     timeframes.add(tf);
-                    list.add(new Triple<>(event, signups, timeframes));
+                    list.add(new EventReportItem(event, signups, timeframes, getBlacklist(event.getId())));
                 }
             }
             return list;
@@ -178,11 +214,13 @@ public class EventRepo implements Repo<Event> {
         }
 
         //PreparedStatement insertDummy = null;
-        PreparedStatement check = null;
+        PreparedStatement checkBlacklist = null;
+        PreparedStatement checkAvailable = null;
         //PreparedStatement updateDummy = null;
         PreparedStatement insertNew = null;
         PreparedStatement deletePrevious = null;
-        ResultSet checkResult = null;
+        ResultSet checkBlacklistResult = null;
+        ResultSet checkAvailableResult = null;
 
         long start = System.currentTimeMillis();
         try {
@@ -191,8 +229,19 @@ public class EventRepo implements Repo<Event> {
             //insertDummy = conn.prepareStatement(INSERT_DUMMY);
             //insertDummy.setInt(1, eventId);
 
-            check = conn.prepareStatement(SELECT_HAS_AVAILABLE);
-            check.setInt(1, eventId);
+            checkBlacklist = conn.prepareStatement(CHECK_BLACKLIST);
+            checkBlacklist.setInt(1, studentId);
+            checkBlacklist.setInt(2, eventId);
+
+            checkBlacklistResult = checkBlacklist.executeQuery();
+            if (checkBlacklistResult.next()) {
+                System.out.println("Tried to sign up to blacklisted event");
+                conn.rollback();
+                return false;
+            }
+
+            checkAvailable = conn.prepareStatement(SELECT_HAS_AVAILABLE);
+            checkAvailable.setInt(1, eventId);
 
             /*updateDummy = conn.prepareStatement(UPDATE_DUMMY);
             updateDummy.setInt(1, studentId);
@@ -220,9 +269,9 @@ public class EventRepo implements Repo<Event> {
                 //debugSleep(studentId);
 
           //      System.out.println(studentId + " - checking");
-                checkResult = check.executeQuery();
+                checkAvailableResult = checkAvailable.executeQuery();
           //      System.out.println(studentId + " - checking queried");
-                if (!(checkResult.next() && checkResult.getBoolean(1))) {
+                if (!(checkAvailableResult.next() && checkAvailableResult.getBoolean(1))) {
             //        System.out.println(studentId + " - no available place");
                 //    conn.rollback();
                     return false;
@@ -267,10 +316,12 @@ public class EventRepo implements Repo<Event> {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+            close(checkBlacklist);
+            close(checkBlacklistResult);
             close(deletePrevious);
             close(insertNew);
-            close(checkResult);
-            close(check);
+            close(checkAvailableResult);
+            close(checkAvailable);
             //close(insertDummy);
             try {
                 conn.setAutoCommit(true);
@@ -284,7 +335,7 @@ public class EventRepo implements Repo<Event> {
         return false;
     }
 
-    public boolean saveEvent(String name, int max, Collection<Integer> tfIds) {
+    public boolean saveEvent(String name, int max, Collection<Integer> tfIds, Set<hu.titi.nlg.entity.Class> blacklist) {
         if (name == null || (name = name.trim()).length() == 0 || max <= 0 || tfIds == null || tfIds.size() == 0) {
             return false;
         }
@@ -292,6 +343,7 @@ public class EventRepo implements Repo<Event> {
         Connection conn = DBUtil.getConnection();
         PreparedStatement insertPrepared = null;
         PreparedStatement tfPrepared = null;
+        PreparedStatement blacklistPrepared = null;
 
         if (conn == null) {
             return false;
@@ -320,6 +372,17 @@ public class EventRepo implements Repo<Event> {
             }
             tfPrepared.executeBatch();
 
+            if (blacklist != null) {
+                blacklistPrepared = conn.prepareStatement(SET_BLACKLIST);
+                for (Class c : blacklist) {
+                    blacklistPrepared.setInt(1, eventId);
+                    blacklistPrepared.setShort(2, c.year.value);
+                    blacklistPrepared.setString(3, c.sign.name());
+                    blacklistPrepared.addBatch();
+                }
+                blacklistPrepared.executeBatch();
+            }
+
             conn.commit();
             return true;
 
@@ -333,6 +396,7 @@ public class EventRepo implements Repo<Event> {
             }
             close(insertPrepared);
             close(tfPrepared);
+            close(blacklistPrepared);
             close(conn);
         }
 
