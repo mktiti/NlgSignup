@@ -63,8 +63,10 @@ public class StudentHandler {
 
         if (role == null) {
             response.redirect("/login");
+            halt(401);
         } else if (role != UserRole.STUDENT) {
             response.redirect("/");
+            halt(401);
         }
     }
 

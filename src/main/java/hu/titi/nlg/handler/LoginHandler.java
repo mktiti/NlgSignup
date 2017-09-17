@@ -48,6 +48,7 @@ public class LoginHandler {
                     response.redirect("/");
                 } else {
                     request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, "ld: admin.txt"));
+                    response.redirect("/login");
                 }
             } else {
                 Optional<Student> student = Context.studentRepo.getStudentByEmail(email);
@@ -59,13 +60,14 @@ public class LoginHandler {
                     response.redirect("/");
                 } else {
                     request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, null));
+                    response.redirect("/login");
                 }
             }
         } else {
             request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.LOGIN, null));
+            response.redirect("/login");
         }
 
-        response.redirect("/login");
         return "";
     }
 

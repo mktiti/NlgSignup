@@ -78,9 +78,12 @@ public class AdminHandler {
 
         if (role == null) {
             response.redirect("/login");
+            halt(401);
         } else if (role != UserRole.ADMIN) {
             response.redirect("/");
+            halt(401);
         }
+
     }
 
     private String mainPage(Request request, Response response) {
