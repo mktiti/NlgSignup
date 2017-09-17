@@ -22,8 +22,8 @@
             #foreach( $tf in $timeframes )
                 <tr>
                 <form action="/admin/timeframes/$tf.id" method="POST">
-                        <td> <input name="start" type="time" value="$tf.start"> </td>
-                        <td> <input name="end" type="time" value="$tf.end"> </td>
+                        <td> <input name="start" type="time" value="$tf.start" placeholder="óó:pp"> </td>
+                        <td> <input name="end" type="time" value="$tf.end" placeholder="óó:pp"> </td>
                         <td> <input type="submit" value="Módosítás"> </td>
                     </form>
                     <td> <a class="abtn" href="/admin/delete/timeframes/delete/$tf.id">Törlés</a> </td>
@@ -31,8 +31,8 @@
             #end
             <form action="/admin/timeframes" method="POST">
                 <tr>
-                    <td> <input name="start" type="time"> </td>
-                    <td> <input name="end" type="time"> </td>
+                    <td> <input name="start" type="time" placeholder="óó:pp"> </td>
+                    <td> <input name="end" type="time" placeholder="óó:pp"> </td>
                     <td colspan="2"> <input type="submit" value="Hozzáadás"> </td>
                 </tr>
             </form>

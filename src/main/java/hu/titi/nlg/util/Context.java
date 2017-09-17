@@ -33,11 +33,13 @@ public class Context {
     private Context(String[] args) {
 
         int port = 4567;
-        try {
-            System.out.println(args[0]);
-            port = Integer.parseInt(args[0]);
-        } catch (Exception e) {
-            System.out.print("Port number uninterpretable");
+        if (args.length > 0) {
+            try {
+                System.out.println(args[0]);
+                port = Integer.parseInt(args[0]);
+            } catch (Exception e) {
+                System.out.print("Port number uninterpretable");
+            }
         }
 
         System.out.println("Port: " + port);

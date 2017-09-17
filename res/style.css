@@ -2,10 +2,9 @@
     background-color: #EEEEEE;
     color: #333333;
     padding: 2px 6px 2px 6px;
-    border-top: 1px solid #CCCCCC;
-    border-right: 1px solid #333333;
-    border-bottom: 1px solid #333333;
-    border-left: 1px solid #CCCCCC;
+    border: 1px solid #CCCCCC;
+    border-right-color: #333333;
+    border-bottom-color: #333333;
     text-decoration: none;
 }
 .ctable td, th {
@@ -25,5 +24,5 @@ body {
     width: 100%;
     font-size: x-large;
     padding: 15px 40px 20px 40px;
-    border-bottom: solid black 5px
+    border-bottom: solid black 5px;
 }

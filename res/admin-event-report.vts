@@ -14,15 +14,17 @@
 
         #parse("header.vts")
 
-        <h2 style="text-align: center">$event.name</h2>
+        <h2 style="text-align: center">$event.name    <a class="abtn" href="/admin/events/$event.id/report.csv">CSV kivonat letöltése</a></h2>
         <table class="ctable">
             <tr>
                 <th>Név</th>
-                <th>Osztály</th>>
+                <th>Osztály</th>
+                <th>Email</th>
             </tr>
             #foreach( $student in $students )
                 <tr>
                     <td><a href="/admin/students/$student.id">$student.name</a></td>
+                    <td>$student.aClass</td>
                     <td>$student.email</td>
                 </tr>
             #end

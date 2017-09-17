@@ -30,9 +30,9 @@
                             <input type="checkbox" name="tf$tf.id" value="true">$tf.start - $tf.end<br>
                         #end
                     </td>
-                    <td> <input type="text" name="name"> </td>
-                    <td>  </td>
-                    <td> <input type="number" min="1" name="max"> </td>
+                    <td><input type="text" name="name" style="display:table-cell; width:100%"></td>
+                    <td></td>
+                    <td><input type="number" min="1" name="max"></td>
                     <td colspan="2" style="text-align: left"> <input type="submit" value="Hozzáadás"> </td>
                 </tr>
             </form>

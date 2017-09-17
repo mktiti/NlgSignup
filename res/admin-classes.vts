@@ -25,7 +25,7 @@
 
             #foreach( $year in $years )
                 <tr>
-                    <td>$year</td>
+                    <td><b>$year</b></td>
                     #foreach( $sign in $signs )
                         <td><a href="/admin/classes/$year/$sign">$year.$sign</a></td>
                     #end
