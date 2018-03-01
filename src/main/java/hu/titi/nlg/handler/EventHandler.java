@@ -2,6 +2,7 @@ package hu.titi.nlg.handler;
 
 import hu.titi.nlg.entity.*;
 import hu.titi.nlg.entity.Class;
+import hu.titi.nlg.repo.StateManager;
 import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
 import spark.Response;
@@ -180,6 +181,12 @@ public class EventHandler {
     }
 
     private String signUp(Request request, Response response) {
+        if (!StateManager.isOpenToSignup()) {
+            request.session().attribute("error", new ErrorReport(ErrorReport.ErrorType.SIGNUP, "Jelenleg nem lehet eseményekre jelentkezni!"));
+            response.redirect("/student");
+            return "";
+        }
+
         String eventString = request.params(":eid");
         int studentID = request.session().attribute("studentID");
         try {

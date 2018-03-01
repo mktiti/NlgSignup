@@ -18,6 +18,9 @@
 
         #parse("header.vts")
         <h2 style="text-align: center">Jelentkezés [$tf.start - $tf.end]</h2>
+        #if ( !$openToSignup )
+            <h2 style="text-align: center; color: #F75B5B">A jelentkezések lezárultak.</h2>
+        #end
 
         <table class="ctable">
             <tr>
@@ -53,7 +56,7 @@
                             #if ( $signed )
                                 <i>Jelentkezve</i>
                             #elseif ( $blacklisted )
-                            #elseif ( $available > 0 )
+                            #elseif ( $openToSignup && $available > 0 )
                                 <a class="abtn" href="/student/events/signup/$event.id">Jelentkezés</a>
                             #end
                         </td>

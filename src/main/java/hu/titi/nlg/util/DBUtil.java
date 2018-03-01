@@ -1,8 +1,8 @@
 package hu.titi.nlg.util;
 
+import hu.titi.nlg.repo.StateManager;
 import hu.titi.nlg.repo.TextManager;
 
-import java.io.IOException;
 import java.sql.*;
 
 public class DBUtil {
@@ -21,6 +21,7 @@ public class DBUtil {
     private static final String CREATE_BLACKLIST = "CREATE TABLE BLACKLIST(EVENT_ID INT NOT NULL REFERENCES EVENT(ID) ON DELETE CASCADE ON UPDATE RESTRICT, CLASS_YEAR SMALLINT CONSTRAINT YEAR_CHK_BL CHECK (CLASS_YEAR BETWEEN 9 AND 12), SIGN CHAR CONSTRAINT SIGN_CHK_BL CHECK (SIGN IN ('A', 'B', 'C', 'D')), PRIMARY KEY(EVENT_ID, CLASS_YEAR, SIGN))";
 
     private static final String CREATE_TEXTS = "CREATE TABLE TEXT(ID INTEGER NOT NULL PRIMARY KEY, TEXT VARCHAR(1000) NOT NULL)";
+    private static final String CREATE_CONFIG = "CREATE TABLE CONFIG(ID INTEGER NOT NULL PRIMARY KEY, VALUE VARCHAR(100) NOT NULL)";
 
     private static final String INSERT_DUMMY_STUDENT = "INSERT INTO STUDENT (NAME, EMAIL, PASSKEY) VALUES ('$TEMP$', '$TEMP$', '$TEMP$')";
     private static final String CHECK_DUMMY_STUDENT = "SELECT NAME FROM STUDENT WHERE ID = 0";
@@ -46,9 +47,13 @@ public class DBUtil {
             createTable(conn, CREATE_EVENT_SIGNUP);
             createTable(conn, CREATE_BLACKLIST);
             createTable(conn, CREATE_TEXTS);
+            createTable(conn, CREATE_CONFIG);
 
             TextManager.insertTexts();
             TextManager.init();
+
+            StateManager.insertSignupState();
+            StateManager.init();
 
             check = conn.createStatement();
             checkRs = check.executeQuery(CHECK_DUMMY_STUDENT);

@@ -15,6 +15,9 @@
 
         #parse("header.vts")
         <h2 style="text-align: center">$message</h2>
+        #if ( !$openToSignup )
+            <h2 style="text-align: center; color: #F75B5B">A jelentkezések lezárultak.</h2>
+        #end
 
         <table class="ctable">
             <tr>
@@ -42,7 +45,11 @@
                         #end
                     </td>
 
-                    <td><a class="abtn" href="/student/events/$tf.id">Módosítás</a></td>
+                    <td>
+                        #if ( $openToSignup )
+                            <a class="abtn" href="/student/events/$tf.id">Módosítás</a>
+                        #end
+                    </td>
                 </tr>
             #end
         </table>

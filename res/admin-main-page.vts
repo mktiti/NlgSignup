@@ -17,6 +17,12 @@
 
         #parse("header.vts")
 
+        #if ( $openToSignup )
+            <div class="wrapper">Jelentkezés: <span style="color: green">Engedélyezve</span> <a href="/admin/disableSignup" style="color: red" class="abtn">Letiltás</a></div>
+        #else
+            <div class="wrapper">Jelentkezés: <span style="color: red">Letiltva</span> <a href="/admin/enableSignup" style="color: green" class="abtn">Engedélyezés</a></div>
+        #end
+
         <div class="wrapper"><a href="/admin/texts">Szöveg beállítások</a><br></div>
         <div class="wrapper"><a href="/admin/timeframes">Idősávok</a><br></div>
         <div class="wrapper"><a href="/admin/events">Események</a><br></div>

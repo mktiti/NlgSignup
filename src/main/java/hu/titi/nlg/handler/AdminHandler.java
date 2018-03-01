@@ -3,6 +3,7 @@ package hu.titi.nlg.handler;
 import hu.titi.nlg.entity.Class;
 import hu.titi.nlg.entity.Pair;
 import hu.titi.nlg.entity.Student;
+import hu.titi.nlg.repo.StateManager;
 import hu.titi.nlg.repo.TextManager;
 import hu.titi.nlg.util.ErrorReport;
 import spark.Request;
@@ -44,6 +45,20 @@ public class AdminHandler {
         get("/admin/students/deleteAll", this::deleteAllStudents);
         get("/admin/students/:id", this::getStudent);
 
+        get("/admin/disableSignup", this::disableSignup);
+        get("/admin/enableSignup", this::enableSignup);
+    }
+
+    private String disableSignup(Request request, Response response) {
+        StateManager.disableSignup();
+        response.redirect("/admin");
+        return "";
+    }
+
+    private String enableSignup(Request request, Response response) {
+        StateManager.enableSignup();
+        response.redirect("/admin");
+        return "";
     }
 
     private String getFile(Request request, Response response) {

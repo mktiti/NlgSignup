@@ -1,10 +1,7 @@
 package hu.titi.nlg.util;
 
 import hu.titi.nlg.handler.*;
-import hu.titi.nlg.repo.EventRepo;
-import hu.titi.nlg.repo.StudentRepo;
-import hu.titi.nlg.repo.TextManager;
-import hu.titi.nlg.repo.TimeframeRepo;
+import hu.titi.nlg.repo.*;
 import spark.ModelAndView;
 import spark.Request;
 import spark.template.velocity.VelocityTemplateEngine;
@@ -50,7 +47,7 @@ public class Context {
             String line = br.readLine();
             if (line != null && (line = line.trim()).length() > 0) {
                 adminPassword = line;
-                System.out.println("Admin pasword read from file");
+                System.out.println("Admin password read from file");
             }
         } catch (IOException ioe) {
             System.out.println("Cannot read admin file, using default admin password");
@@ -78,6 +75,8 @@ public class Context {
         for (TextManager.Text text : TextManager.Text.values()) {
             model.put(text.getName(), text.getString());
         }
+        model.put("openToSignup", StateManager.isOpenToSignup());
+
         model.put("uname", request.session().attribute("uname"));
         ErrorReport error = request.session().attribute("error");
         if (error != null) {
